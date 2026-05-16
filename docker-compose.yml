@@ -1,0 +1,149 @@
+version: "3.9"
+
+services:
+
+  frontend:
+    build: ./frontend
+    container_name: jagriti_frontend
+    restart: unless-stopped
+    environment:
+      - REACT_APP_API_URL=http://localhost:5000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - jagriti_net
+
+  backend:
+    build: ./backend
+    container_name: jagriti_backend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - PORT=5000
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=jagriti
+      - DB_USER=jagriti
+      - DB_PASS=${DB_PASS}
+      - NLP_SERVICE_URL=http://nlp-service:8000
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+      - chromadb
+    networks:
+      - jagriti_net
+
+  nlp-service:
+    build: ./nlp-service
+    container_name: jagriti_nlp
+    restart: unless-stopped
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=jagriti
+      - DB_USER=jagriti
+      - DB_PASS=${DB_PASS}
+      - CHROMADB_URL=http://chromadb:8001
+      - LIBRETRANSLATE_URL=http://libretranslate:5500
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - chromadb
+      - libretranslate
+    networks:
+      - jagriti_net
+
+  postgres:
+    image: postgis/postgis:15-3.3
+    container_name: jagriti_postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=jagriti
+      - POSTGRES_USER=jagriti
+      - POSTGRES_PASSWORD=${DB_PASS}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - jagriti_net
+
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: jagriti_chromadb
+    restart: unless-stopped
+    volumes:
+      - chroma_data:/chroma/chroma
+    ports:
+      - "8001:8000"
+    networks:
+      - jagriti_net
+
+  libretranslate:
+    image: libretranslate/libretranslate:latest
+    container_name: jagriti_translate
+    restart: unless-stopped
+    environment:
+      - LT_LOAD_ONLY=en,hi
+    ports:
+      - "5500:5000"
+    volumes:
+      - libretranslate_data:/home/libretranslate/.local
+    networks:
+      - jagriti_net
+
+  nginx:
+    image: nginx:alpine
+    container_name: jagriti_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - jagriti_net
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: jagriti_prometheus
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - jagriti_net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: jagriti_grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASS}
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3001:3000"
+    networks:
+      - jagriti_net
+
+volumes:
+  postgres_data:
+  chroma_data:
+  libretranslate_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  jagriti_net:
+    driver: bridge
