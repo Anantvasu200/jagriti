@@ -1,0 +1,13 @@
+District,State,Year,CrimeType,Count
+New Delhi,Delhi,2023,theft,50
+Mumbai,Maharashtra,2023,theft,45
+Bengaluru,Karnataka,2023,assault,30
+Kolkata,West Bengal,2023,harassment,20
+Chennai,Tamil Nadu,2023,suspicious,15
+Hyderabad,Telangana,2023,theft,25
+Pune,Maharashtra,2023,harassment,18
+Ahmedabad,Gujarat,2023,assault,12
+Jaipur,Rajasthan,2023,theft,22
+Lucknow,Uttar Pradesh,2023,harassment,28
+Patna,Bihar,2023,suspicious,10
+Bhopal,Madhya Pradesh,2023,assault,14

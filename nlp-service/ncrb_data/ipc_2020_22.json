@@ -1,0 +1,470 @@
+{
+    "index_name": "15150682-a9ed-475d-b0e3-67b292e90d22",
+    "title": "State\/UT-wise Number of Indian Penal Code (IPC) Crimes from 2020 to 2022",
+    "desc": "State\/UT-wise Number of Indian Penal Code (IPC) Crimes from 2020 to 2022",
+    "org_type": "Central",
+    "org": [
+        "Ministry of Home Affairs",
+        "Department of States",
+        "National Crime Records Bureau (NCRB)"
+    ],
+    "sector": [
+        "Police"
+    ],
+    "source": "data.gov.in",
+    "catalog_uuid": "07f94dd3-f6fe-4140-a246-7ae19cc00016",
+    "visualizable": "1",
+    "active": "1",
+    "created": 1713251933,
+    "updated": 1713263617,
+    "created_date": "2024-04-16T09:18:53Z",
+    "updated_date": "2024-04-16T16:03:37Z",
+    "external_ws": 0,
+    "external_ws_url": "",
+    "target_bucket": {
+        "index": "api",
+        "type": "07f94dd3-f6fe-4140-a246-7ae19cc00016",
+        "field": "15150682-a9ed-475d-b0e3-67b292e90d22"
+    },
+    "field": [
+        {
+            "id": "sl__no_",
+            "name": "Sl. No.",
+            "type": "keyword"
+        },
+        {
+            "id": "state_ut",
+            "name": "State\/UT",
+            "type": "keyword"
+        },
+        {
+            "id": "_2020",
+            "name": "2020",
+            "type": "double"
+        },
+        {
+            "id": "_2021",
+            "name": "2021",
+            "type": "double"
+        },
+        {
+            "id": "_2022",
+            "name": "2022",
+            "type": "double"
+        },
+        {
+            "id": "mid_year_projected_population__in_lakhs___2022_",
+            "name": "Mid-Year Projected Population (in Lakhs) (2022)",
+            "type": "double"
+        },
+        {
+            "id": "rate_of_cognizable_crimes__ipc___2022_",
+            "name": "Rate of Cognizable Crimes (IPC) (2022)",
+            "type": "double"
+        },
+        {
+            "id": "chargesheeting_rate__2022_",
+            "name": "Chargesheeting Rate (2022)",
+            "type": "double"
+        }
+    ],
+    "message": "Resource lists",
+    "version": "2.2.0",
+    "status": "ok",
+    "total": 39,
+    "count": 39,
+    "limit": "200",
+    "offset": "0",
+    "records": [
+        {
+            "sl__no_": "1",
+            "state_ut": "Andhra Pradesh",
+            "_2020": 188997,
+            "_2021": 179611,
+            "_2022": 158547,
+            "mid_year_projected_population__in_lakhs___2022_": 530.29999999999995,
+            "rate_of_cognizable_crimes__ipc___2022_": 299,
+            "chargesheeting_rate__2022_": 86.5
+        },
+        {
+            "sl__no_": "2",
+            "state_ut": "Arunachal Pradesh",
+            "_2020": 2244,
+            "_2021": 2626,
+            "_2022": 2308,
+            "mid_year_projected_population__in_lakhs___2022_": 15.5,
+            "rate_of_cognizable_crimes__ipc___2022_": 148.80000000000001,
+            "chargesheeting_rate__2022_": 47.200000000000003
+        },
+        {
+            "sl__no_": "3",
+            "state_ut": "Assam",
+            "_2020": 111558,
+            "_2021": 119883,
+            "_2022": 59315,
+            "mid_year_projected_population__in_lakhs___2022_": 354.89999999999998,
+            "rate_of_cognizable_crimes__ipc___2022_": 167.09999999999999,
+            "chargesheeting_rate__2022_": 32.600000000000001
+        },
+        {
+            "sl__no_": "4",
+            "state_ut": "Bihar",
+            "_2020": 194698,
+            "_2021": 186006,
+            "_2022": 211079,
+            "mid_year_projected_population__in_lakhs___2022_": 1255.3,
+            "rate_of_cognizable_crimes__ipc___2022_": 168.09999999999999,
+            "chargesheeting_rate__2022_": 75.400000000000006
+        },
+        {
+            "sl__no_": "5",
+            "state_ut": "Chhattisgarh",
+            "_2020": 65216,
+            "_2021": 70519,
+            "_2022": 73822,
+            "mid_year_projected_population__in_lakhs___2022_": 299.5,
+            "rate_of_cognizable_crimes__ipc___2022_": 246.5,
+            "chargesheeting_rate__2022_": 80.400000000000006
+        },
+        {
+            "sl__no_": "6",
+            "state_ut": "Goa",
+            "_2020": 3393,
+            "_2021": 2099,
+            "_2022": 2711,
+            "mid_year_projected_population__in_lakhs___2022_": 15.699999999999999,
+            "rate_of_cognizable_crimes__ipc___2022_": 172.80000000000001,
+            "chargesheeting_rate__2022_": 75.900000000000006
+        },
+        {
+            "sl__no_": "7",
+            "state_ut": "Gujarat",
+            "_2020": 381849,
+            "_2021": 273056,
+            "_2022": 134600,
+            "mid_year_projected_population__in_lakhs___2022_": 709.29999999999995,
+            "rate_of_cognizable_crimes__ipc___2022_": 189.80000000000001,
+            "chargesheeting_rate__2022_": 89.799999999999997
+        },
+        {
+            "sl__no_": "8",
+            "state_ut": "Haryana",
+            "_2020": 103276,
+            "_2021": 112720,
+            "_2022": 125435,
+            "mid_year_projected_population__in_lakhs___2022_": 299.69999999999999,
+            "rate_of_cognizable_crimes__ipc___2022_": 418.60000000000002,
+            "chargesheeting_rate__2022_": 43.299999999999997
+        },
+        {
+            "sl__no_": "9",
+            "state_ut": "Himachal Pradesh",
+            "_2020": 14803,
+            "_2021": 13041,
+            "_2022": 13231,
+            "mid_year_projected_population__in_lakhs___2022_": 74.400000000000006,
+            "rate_of_cognizable_crimes__ipc___2022_": 177.80000000000001,
+            "chargesheeting_rate__2022_": 82.900000000000006
+        },
+        {
+            "sl__no_": "10",
+            "state_ut": "Jharkhand",
+            "_2020": 51033,
+            "_2021": 47684,
+            "_2022": 48726,
+            "mid_year_projected_population__in_lakhs___2022_": 391.39999999999998,
+            "rate_of_cognizable_crimes__ipc___2022_": 124.5,
+            "chargesheeting_rate__2022_": 58.200000000000003
+        },
+        {
+            "sl__no_": "11",
+            "state_ut": "Karnataka",
+            "_2020": 106350,
+            "_2021": 115728,
+            "_2022": 129461,
+            "mid_year_projected_population__in_lakhs___2022_": 674.10000000000002,
+            "rate_of_cognizable_crimes__ipc___2022_": 192.09999999999999,
+            "chargesheeting_rate__2022_": 78.299999999999997
+        },
+        {
+            "sl__no_": "12",
+            "state_ut": "Kerala",
+            "_2020": 149099,
+            "_2021": 142643,
+            "_2022": 235858,
+            "mid_year_projected_population__in_lakhs___2022_": 356.80000000000001,
+            "rate_of_cognizable_crimes__ipc___2022_": 661,
+            "chargesheeting_rate__2022_": 96
+        },
+        {
+            "sl__no_": "13",
+            "state_ut": "Madhya Pradesh",
+            "_2020": 283881,
+            "_2021": 304066,
+            "_2022": 298578,
+            "mid_year_projected_population__in_lakhs___2022_": 858.89999999999998,
+            "rate_of_cognizable_crimes__ipc___2022_": 347.60000000000002,
+            "chargesheeting_rate__2022_": 86.599999999999994
+        },
+        {
+            "sl__no_": "14",
+            "state_ut": "Maharashtra",
+            "_2020": 394017,
+            "_2021": 367218,
+            "_2022": 374038,
+            "mid_year_projected_population__in_lakhs___2022_": 1257.4000000000001,
+            "rate_of_cognizable_crimes__ipc___2022_": 297.5,
+            "chargesheeting_rate__2022_": 75.299999999999997
+        },
+        {
+            "sl__no_": "15",
+            "state_ut": "Manipur",
+            "_2020": 2349,
+            "_2021": 2484,
+            "_2022": 3029,
+            "mid_year_projected_population__in_lakhs___2022_": 32,
+            "rate_of_cognizable_crimes__ipc___2022_": 94.599999999999994,
+            "chargesheeting_rate__2022_": 10.4
+        },
+        {
+            "sl__no_": "16",
+            "state_ut": "Meghalaya",
+            "_2020": 2871,
+            "_2021": 2672,
+            "_2022": 2914,
+            "mid_year_projected_population__in_lakhs___2022_": 33.299999999999997,
+            "rate_of_cognizable_crimes__ipc___2022_": 87.599999999999994,
+            "chargesheeting_rate__2022_": 26.899999999999999
+        },
+        {
+            "sl__no_": "17",
+            "state_ut": "Mizoram",
+            "_2020": 1787,
+            "_2021": 2467,
+            "_2022": 3587,
+            "mid_year_projected_population__in_lakhs___2022_": 12.300000000000001,
+            "rate_of_cognizable_crimes__ipc___2022_": 291.60000000000002,
+            "chargesheeting_rate__2022_": 58
+        },
+        {
+            "sl__no_": "18",
+            "state_ut": "Nagaland",
+            "_2020": 1022,
+            "_2021": 1033,
+            "_2022": 1008,
+            "mid_year_projected_population__in_lakhs___2022_": 22.199999999999999,
+            "rate_of_cognizable_crimes__ipc___2022_": 45.399999999999999,
+            "chargesheeting_rate__2022_": 58
+        },
+        {
+            "sl__no_": "19",
+            "state_ut": "Odisha",
+            "_2020": 108533,
+            "_2021": 124956,
+            "_2022": 143414,
+            "mid_year_projected_population__in_lakhs___2022_": 460.80000000000001,
+            "rate_of_cognizable_crimes__ipc___2022_": 311.19999999999999,
+            "chargesheeting_rate__2022_": 77.900000000000006
+        },
+        {
+            "sl__no_": "20",
+            "state_ut": "Punjab",
+            "_2020": 49870,
+            "_2021": 46454,
+            "_2022": 43738,
+            "mid_year_projected_population__in_lakhs___2022_": 306,
+            "rate_of_cognizable_crimes__ipc___2022_": 142.90000000000001,
+            "chargesheeting_rate__2022_": 66.400000000000006
+        },
+        {
+            "sl__no_": "21",
+            "state_ut": "Rajasthan",
+            "_2020": 193279,
+            "_2021": 214552,
+            "_2022": 236090,
+            "mid_year_projected_population__in_lakhs___2022_": 804.39999999999998,
+            "rate_of_cognizable_crimes__ipc___2022_": 293.5,
+            "chargesheeting_rate__2022_": 49.799999999999997
+        },
+        {
+            "sl__no_": "22",
+            "state_ut": "Sikkim",
+            "_2020": 504,
+            "_2021": 532,
+            "_2022": 549,
+            "mid_year_projected_population__in_lakhs___2022_": 6.7999999999999998,
+            "rate_of_cognizable_crimes__ipc___2022_": 80.299999999999997,
+            "chargesheeting_rate__2022_": 55.5
+        },
+        {
+            "sl__no_": "23",
+            "state_ut": "Tamil Nadu",
+            "_2020": 891700,
+            "_2021": 322852,
+            "_2022": 193913,
+            "mid_year_projected_population__in_lakhs___2022_": 767.10000000000002,
+            "rate_of_cognizable_crimes__ipc___2022_": 252.80000000000001,
+            "chargesheeting_rate__2022_": 70.700000000000003
+        },
+        {
+            "sl__no_": "24",
+            "state_ut": "Telangana",
+            "_2020": 135885,
+            "_2021": 146131,
+            "_2022": 151849,
+            "mid_year_projected_population__in_lakhs___2022_": 379.5,
+            "rate_of_cognizable_crimes__ipc___2022_": 400.10000000000002,
+            "chargesheeting_rate__2022_": 79.099999999999994
+        },
+        {
+            "sl__no_": "25",
+            "state_ut": "Tripura",
+            "_2020": 4010,
+            "_2021": 4133,
+            "_2022": 3653,
+            "mid_year_projected_population__in_lakhs___2022_": 41.200000000000003,
+            "rate_of_cognizable_crimes__ipc___2022_": 88.700000000000003,
+            "chargesheeting_rate__2022_": 73.099999999999994
+        },
+        {
+            "sl__no_": "26",
+            "state_ut": "Uttar Pradesh",
+            "_2020": 355110,
+            "_2021": 357905,
+            "_2022": 401787,
+            "mid_year_projected_population__in_lakhs___2022_": 2340.9000000000001,
+            "rate_of_cognizable_crimes__ipc___2022_": 171.59999999999999,
+            "chargesheeting_rate__2022_": 76.099999999999994
+        },
+        {
+            "sl__no_": "27",
+            "state_ut": "Uttarakhand",
+            "_2020": 13812,
+            "_2021": 15704,
+            "_2022": 16967,
+            "mid_year_projected_population__in_lakhs___2022_": 115.59999999999999,
+            "rate_of_cognizable_crimes__ipc___2022_": 146.80000000000001,
+            "chargesheeting_rate__2022_": 71.5
+        },
+        {
+            "sl__no_": "28",
+            "state_ut": "West Bengal",
+            "_2020": 158060,
+            "_2021": 157498,
+            "_2022": 156503,
+            "mid_year_projected_population__in_lakhs___2022_": 987.60000000000002,
+            "rate_of_cognizable_crimes__ipc___2022_": 158.5,
+            "chargesheeting_rate__2022_": 90.599999999999994
+        },
+        {
+            "sl__no_": "Total State (S)",
+            "state_ut": "Total State (S)",
+            "_2020": 3969206,
+            "_2021": 3336273,
+            "_2022": 3226710,
+            "mid_year_projected_population__in_lakhs___2022_": 13403,
+            "rate_of_cognizable_crimes__ipc___2022_": 240.69999999999999,
+            "chargesheeting_rate__2022_": 74.900000000000006
+        },
+        {
+            "sl__no_": "29",
+            "state_ut": "Andaman and Nicobar Islands",
+            "_2020": 482,
+            "_2021": 386,
+            "_2022": 460,
+            "mid_year_projected_population__in_lakhs___2022_": 4,
+            "rate_of_cognizable_crimes__ipc___2022_": 114.40000000000001,
+            "chargesheeting_rate__2022_": 83.900000000000006
+        },
+        {
+            "sl__no_": "30",
+            "state_ut": "Chandigarh",
+            "_2020": 2583,
+            "_2021": 2401,
+            "_2022": 2941,
+            "mid_year_projected_population__in_lakhs___2022_": 12.199999999999999,
+            "rate_of_cognizable_crimes__ipc___2022_": 240.5,
+            "chargesheeting_rate__2022_": 54.399999999999999
+        },
+        {
+            "sl__no_": "31",
+            "state_ut": "Dadra and Nagar Haveli and Daman and Diu",
+            "_2020": 441,
+            "_2021": 490,
+            "_2022": 1184,
+            "mid_year_projected_population__in_lakhs___2022_": 12,
+            "rate_of_cognizable_crimes__ipc___2022_": 98.599999999999994,
+            "chargesheeting_rate__2022_": 82.5
+        },
+        {
+            "sl__no_": "32",
+            "state_ut": "Delhi",
+            "_2020": 249192,
+            "_2021": 291904,
+            "_2022": 300429,
+            "mid_year_projected_population__in_lakhs___2022_": 211,
+            "rate_of_cognizable_crimes__ipc___2022_": 1424.0999999999999,
+            "chargesheeting_rate__2022_": 30.199999999999999
+        },
+        {
+            "sl__no_": "33",
+            "state_ut": "Jammu and Kashmir",
+            "_2020": 25233,
+            "_2021": 27447,
+            "_2022": 25915,
+            "mid_year_projected_population__in_lakhs___2022_": 135.40000000000001,
+            "rate_of_cognizable_crimes__ipc___2022_": 191.40000000000001,
+            "chargesheeting_rate__2022_": 77.099999999999994
+        },
+        {
+            "sl__no_": "34",
+            "state_ut": "Ladakh",
+            "_2020": 387,
+            "_2021": 519,
+            "_2022": 439,
+            "mid_year_projected_population__in_lakhs___2022_": 3,
+            "rate_of_cognizable_crimes__ipc___2022_": 146.80000000000001,
+            "chargesheeting_rate__2022_": 82.400000000000006
+        },
+        {
+            "sl__no_": "35",
+            "state_ut": "Lakshadweep",
+            "_2020": 107,
+            "_2021": 89,
+            "_2022": 64,
+            "mid_year_projected_population__in_lakhs___2022_": 0.69999999999999996,
+            "rate_of_cognizable_crimes__ipc___2022_": 92.799999999999997,
+            "chargesheeting_rate__2022_": 73.5
+        },
+        {
+            "sl__no_": "36",
+            "state_ut": "Puducherry",
+            "_2020": 6725,
+            "_2021": 3851,
+            "_2022": 3237,
+            "mid_year_projected_population__in_lakhs___2022_": 16.199999999999999,
+            "rate_of_cognizable_crimes__ipc___2022_": 199.69999999999999,
+            "chargesheeting_rate__2022_": 91.299999999999997
+        },
+        {
+            "sl__no_": "Total UT(S)",
+            "state_ut": "Total UT(S)",
+            "_2020": 285150,
+            "_2021": 327087,
+            "_2022": 334669,
+            "mid_year_projected_population__in_lakhs___2022_": 394.5,
+            "rate_of_cognizable_crimes__ipc___2022_": 848.39999999999998,
+            "chargesheeting_rate__2022_": 35.600000000000001
+        },
+        {
+            "sl__no_": "Total All India",
+            "state_ut": "Total All India",
+            "_2020": 4254356,
+            "_2021": 3663360,
+            "_2022": 3561379,
+            "mid_year_projected_population__in_lakhs___2022_": 13797.5,
+            "rate_of_cognizable_crimes__ipc___2022_": 258.10000000000002,
+            "chargesheeting_rate__2022_": 71.299999999999997
+        }
+    ]
+}

@@ -1,0 +1,280 @@
+{
+    "index_name": "5b56b0bb-6b89-4077-a0f8-b0833f14947a",
+    "title": "City-wise Number of Murder Cases in Metropolitan Cities during 2020 to 2022",
+    "desc": "City-wise Number of Murder Cases in Metropolitan Cities during 2020 to 2022",
+    "org_type": "Central",
+    "org": [
+        "Ministry of Home Affairs",
+        "Department of States",
+        "National Crime Records Bureau (NCRB)"
+    ],
+    "sector": [
+        "Police"
+    ],
+    "source": "data.gov.in",
+    "catalog_uuid": "07f94dd3-f6fe-4140-a246-7ae19cc00016",
+    "visualizable": "1",
+    "active": "1",
+    "created": 1713252120,
+    "updated": 1713263624,
+    "created_date": "2024-04-16T09:22:00Z",
+    "updated_date": "2024-04-16T16:03:44Z",
+    "external_ws": 0,
+    "external_ws_url": "",
+    "target_bucket": {
+        "index": "api",
+        "type": "07f94dd3-f6fe-4140-a246-7ae19cc00016",
+        "field": "5b56b0bb-6b89-4077-a0f8-b0833f14947a"
+    },
+    "field": [
+        {
+            "id": "sl__no_",
+            "name": "Sl. No.",
+            "type": "keyword"
+        },
+        {
+            "id": "city",
+            "name": "City",
+            "type": "keyword"
+        },
+        {
+            "id": "_2020",
+            "name": "2020",
+            "type": "double"
+        },
+        {
+            "id": "_2021",
+            "name": "2021",
+            "type": "double"
+        },
+        {
+            "id": "_2022",
+            "name": "2022",
+            "type": "double"
+        },
+        {
+            "id": "actual_population__in_lakhs___2011_",
+            "name": "Actual Population (in Lakhs) (2011)",
+            "type": "double"
+        },
+        {
+            "id": "rate_of_murder__2022_",
+            "name": "Rate of Murder (2022)",
+            "type": "double"
+        },
+        {
+            "id": "chargesheeting_rate__2022_",
+            "name": "Chargesheeting Rate (2022)",
+            "type": "double"
+        }
+    ],
+    "message": "Resource lists",
+    "version": "2.2.0",
+    "status": "ok",
+    "total": 20,
+    "count": 20,
+    "limit": "200",
+    "offset": "0",
+    "records": [
+        {
+            "sl__no_": "1",
+            "city": "Ahmedabad (Gujarat)",
+            "_2020": 70,
+            "_2021": 97,
+            "_2022": 100,
+            "actual_population__in_lakhs___2011_": 63.5,
+            "rate_of_murder__2022_": 1.6000000000000001,
+            "chargesheeting_rate__2022_": 91.700000000000003
+        },
+        {
+            "sl__no_": "2",
+            "city": "Bengaluru (Karnataka)",
+            "_2020": 179,
+            "_2021": 155,
+            "_2022": 173,
+            "actual_population__in_lakhs___2011_": 85,
+            "rate_of_murder__2022_": 2,
+            "chargesheeting_rate__2022_": 94.5
+        },
+        {
+            "sl__no_": "3",
+            "city": "Chennai (Tamil Nadu)",
+            "_2020": 150,
+            "_2021": 161,
+            "_2022": 101,
+            "actual_population__in_lakhs___2011_": 87,
+            "rate_of_murder__2022_": 1.2,
+            "chargesheeting_rate__2022_": 98.200000000000003
+        },
+        {
+            "sl__no_": "4",
+            "city": "Coimbatore (Tamil Nadu)",
+            "_2020": 31,
+            "_2021": 30,
+            "_2022": 31,
+            "actual_population__in_lakhs___2011_": 21.5,
+            "rate_of_murder__2022_": 1.3999999999999999,
+            "chargesheeting_rate__2022_": 96.599999999999994
+        },
+        {
+            "sl__no_": "5",
+            "city": "Delhi City",
+            "_2020": 461,
+            "_2021": 454,
+            "_2022": 501,
+            "actual_population__in_lakhs___2011_": 163.09999999999999,
+            "rate_of_murder__2022_": 3.1000000000000001,
+            "chargesheeting_rate__2022_": 95
+        },
+        {
+            "sl__no_": "6",
+            "city": "Ghaziabad (Uttar Pradesh)",
+            "_2020": 23,
+            "_2021": 25,
+            "_2022": 61,
+            "actual_population__in_lakhs___2011_": 23.600000000000001,
+            "rate_of_murder__2022_": 2.6000000000000001,
+            "chargesheeting_rate__2022_": 78.299999999999997
+        },
+        {
+            "sl__no_": "7",
+            "city": "Hyderabad (Telangana)",
+            "_2020": 71,
+            "_2021": 98,
+            "_2022": 79,
+            "actual_population__in_lakhs___2011_": 77.5,
+            "rate_of_murder__2022_": 1,
+            "chargesheeting_rate__2022_": 94.799999999999997
+        },
+        {
+            "sl__no_": "8",
+            "city": "Indore (Madhya Pradesh)",
+            "_2020": 63,
+            "_2021": 54,
+            "_2022": 72,
+            "actual_population__in_lakhs___2011_": 21.699999999999999,
+            "rate_of_murder__2022_": 3.2999999999999998,
+            "chargesheeting_rate__2022_": 93.200000000000003
+        },
+        {
+            "sl__no_": "9",
+            "city": "Jaipur (Rajasthan)",
+            "_2020": 95,
+            "_2021": 118,
+            "_2022": 132,
+            "actual_population__in_lakhs___2011_": 30.699999999999999,
+            "rate_of_murder__2022_": 4.2999999999999998,
+            "chargesheeting_rate__2022_": 52.399999999999999
+        },
+        {
+            "sl__no_": "10",
+            "city": "Kanpur (Uttar Pradesh)",
+            "_2020": 41,
+            "_2021": 48,
+            "_2022": 81,
+            "actual_population__in_lakhs___2011_": 29.199999999999999,
+            "rate_of_murder__2022_": 2.7999999999999998,
+            "chargesheeting_rate__2022_": 94.5
+        },
+        {
+            "sl__no_": "11",
+            "city": "Kochi (Kerala)",
+            "_2020": 9,
+            "_2021": 10,
+            "_2022": 16,
+            "actual_population__in_lakhs___2011_": 21.199999999999999,
+            "rate_of_murder__2022_": 0.80000000000000004,
+            "chargesheeting_rate__2022_": 92.900000000000006
+        },
+        {
+            "sl__no_": "12",
+            "city": "Kolkata (West Bengal)",
+            "_2020": 53,
+            "_2021": 45,
+            "_2022": 34,
+            "actual_population__in_lakhs___2011_": 141.09999999999999,
+            "rate_of_murder__2022_": 0.20000000000000001,
+            "chargesheeting_rate__2022_": 100
+        },
+        {
+            "sl__no_": "13",
+            "city": "Kozhikode (Kerala)",
+            "_2020": 5,
+            "_2021": 5,
+            "_2022": 7,
+            "actual_population__in_lakhs___2011_": 20.300000000000001,
+            "rate_of_murder__2022_": 0.29999999999999999,
+            "chargesheeting_rate__2022_": 100
+        },
+        {
+            "sl__no_": "14",
+            "city": "Lucknow (Uttar Pradesh)",
+            "_2020": 81,
+            "_2021": 101,
+            "_2022": 131,
+            "actual_population__in_lakhs___2011_": 29,
+            "rate_of_murder__2022_": 4.5,
+            "chargesheeting_rate__2022_": 75.700000000000003
+        },
+        {
+            "sl__no_": "15",
+            "city": "Mumbai (Maharashtra)",
+            "_2020": 148,
+            "_2021": 162,
+            "_2022": 135,
+            "actual_population__in_lakhs___2011_": 184.09999999999999,
+            "rate_of_murder__2022_": 0.69999999999999996,
+            "chargesheeting_rate__2022_": 96.299999999999997
+        },
+        {
+            "sl__no_": "16",
+            "city": "Nagpur (Maharashtra)",
+            "_2020": 97,
+            "_2021": 95,
+            "_2022": 65,
+            "actual_population__in_lakhs___2011_": 25,
+            "rate_of_murder__2022_": 2.6000000000000001,
+            "chargesheeting_rate__2022_": 93.900000000000006
+        },
+        {
+            "sl__no_": "17",
+            "city": "Patna (Bihar)",
+            "_2020": 79,
+            "_2021": 76,
+            "_2022": 107,
+            "actual_population__in_lakhs___2011_": 20.5,
+            "rate_of_murder__2022_": 5.2000000000000002,
+            "chargesheeting_rate__2022_": 98.200000000000003
+        },
+        {
+            "sl__no_": "18",
+            "city": "Pune (Maharashtra)",
+            "_2020": 77,
+            "_2021": 100,
+            "_2022": 105,
+            "actual_population__in_lakhs___2011_": 50.5,
+            "rate_of_murder__2022_": 2.1000000000000001,
+            "chargesheeting_rate__2022_": 93
+        },
+        {
+            "sl__no_": "19",
+            "city": "Surat (Gujarat)",
+            "_2020": 116,
+            "_2021": 121,
+            "_2022": 100,
+            "actual_population__in_lakhs___2011_": 45.799999999999997,
+            "rate_of_murder__2022_": 2.2000000000000002,
+            "chargesheeting_rate__2022_": 92
+        },
+        {
+            "sl__no_": "Total Cities",
+            "city": "Total Cities",
+            "_2020": 1849,
+            "_2021": 1955,
+            "_2022": 2031,
+            "actual_population__in_lakhs___2011_": 1140.4000000000001,
+            "rate_of_murder__2022_": 1.8,
+            "chargesheeting_rate__2022_": 91
+        }
+    ]
+}
