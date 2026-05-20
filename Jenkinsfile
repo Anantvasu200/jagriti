@@ -16,28 +16,34 @@ pipeline {
             }
         }
 
-        // ── Security Scans ──────────────────────────────────────────────
+                // ── Security Scans ──────────────────────────────────────────────
         stage('Security scans') {
             parallel {
+
                 stage('Gitleaks') {
                     steps {
                         sh 'gitleaks detect --source . --report-format json --report-path gitleaks-report.json || true'
+                    }
+
                     post {
                         always {
                             archiveArtifacts artifacts: 'gitleaks-report.json', allowEmptyArchive: true
                         }
                     }
                 }
+
                 stage('Semgrep') {
                     steps {
                         sh 'semgrep scan --config auto --json --output semgrep-report.json . || true'
                     }
+
                     post {
                         always {
                             archiveArtifacts artifacts: 'semgrep-report.json', allowEmptyArchive: true
                         }
                     }
                 }
+
             }
         }
 
