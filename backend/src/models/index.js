@@ -4,6 +4,8 @@ const Incident = require('./Incident')(sequelize);
 const IncidentSource = require('./IncidentSource')(sequelize);
 const CommunityReport = require('./CommunityReport')(sequelize);
 const SafetyScore = require('./SafetyScore')(sequelize);
+const ApiKey = require('./ApiKey')(sequelize);
+const User = require('./User')(sequelize);
 
 // Associations
 Incident.hasMany(IncidentSource, { foreignKey: 'incidentId', as: 'sources' });
@@ -17,5 +19,7 @@ module.exports = {
   Incident,
   IncidentSource,
   CommunityReport,
-  SafetyScore
+  SafetyScore,
+  ApiKey,
+  User
 };

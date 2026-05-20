@@ -1,0 +1,17 @@
+{
+  "short_name": "Jagriti",
+  "name": "Jagriti Safety Network",
+  "description": "Real-time community-sourced safety maps and emergency SOS panic network.",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0f172a",
+  "theme_color": "#0ea5e9",
+  "display": "standalone",
+  "orientation": "portrait"
+}

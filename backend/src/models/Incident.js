@@ -40,6 +40,10 @@ module.exports = (sequelize) => {
     confirmations: {
       type: DataTypes.INTEGER,
       defaultValue: 0
+    },
+    confidence_score: {
+      type: DataTypes.FLOAT,
+      defaultValue: 1.0
     }
   }, {
     tableName: 'incidents',

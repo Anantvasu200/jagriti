@@ -1,11 +1,20 @@
 require('dotenv').config();
 const express = require('express');
+const http = require('http');
 const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const logger = require('./config/logger');
 const { initializeDatabase } = require('./config/sequelize');
+const { initSocket } = require('./config/socket');
 const incidentRoutes = require('./routes/incidentRoutes');
+const reportRoutes = require('./routes/reportRoutes');
+const publicV1Routes = require('./routes/publicV1Routes');
+const apiDeveloperRoutes = require('./routes/apiDeveloperRoutes');
+const authRoutes = require('./routes/authRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const routeRoutes = require('./routes/routeRoutes');
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -19,7 +28,8 @@ app.use(express.json());
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again after 15 minutes'
+  message: 'Too many requests from this IP, please try again after 15 minutes',
+  validate: { trustProxy: false }
 });
 app.use('/api/', limiter);
 
@@ -29,7 +39,13 @@ app.get('/api/health', (req, res) => {
 });
 
 // API Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/incidents', incidentRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/v1', publicV1Routes);
+app.use('/api/developer', apiDeveloperRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/routes', routeRoutes);
 
 // Terminal Logging Route
 app.post('/api/log', (req, res) => {
@@ -54,13 +70,20 @@ app.post('/api/log', (req, res) => {
   res.status(200).json({ status: 'success' });
 });
 
+// Create HTTP server wrapping Express app
+const server = http.createServer(app);
+
+// Initialize WebSockets
+initSocket(server);
+
 // Start Server
 const startServer = async () => {
   await initializeDatabase();
   
-  app.listen(PORT, () => {
+  server.listen(PORT, () => {
     logger.info(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
   });
 };
 
 startServer();
+

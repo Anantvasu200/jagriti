@@ -26,7 +26,7 @@ services:
       - DB_PORT=5432
       - DB_NAME=jagriti
       - DB_USER=jagriti
-      - DB_PASS=${DB_PASS}
+      - DB_PASSWORD=${DB_PASSWORD}
       - NLP_SERVICE_URL=http://nlp-service:8000
     ports:
       - "5000:5000"
@@ -45,7 +45,7 @@ services:
       - DB_PORT=5432
       - DB_NAME=jagriti
       - DB_USER=jagriti
-      - DB_PASS=${DB_PASS}
+      - DB_PASSWORD=${DB_PASSWORD}
       - CHROMADB_URL=http://chromadb:8001
       - LIBRETRANSLATE_URL=http://libretranslate:5500
     ports:
@@ -64,7 +64,7 @@ services:
     environment:
       - POSTGRES_DB=jagriti
       - POSTGRES_USER=jagriti
-      - POSTGRES_PASSWORD=${DB_PASS}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
