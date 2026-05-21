@@ -157,24 +157,18 @@ stage('Tests') {
         }
 
     // ── Deploy ───────────────────────────────────────────────
-        stage('Deploy') {
-            when {
-                anyOf {
-                    branch 'main'
-                    expression { env.BRANCH_NAME == null }
-                }
-            }
-            steps {
-                sh """
-                    cd ${PROJECT_DIR}
-                    git pull origin main
-                    docker compose -f ${COMPOSE_FILE} up -d --remove-orphans
-                    docker image prune -f
-                    sudo nginx -t && sudo systemctl reload nginx
-                    sudo systemctl is-active cloudflared || sudo systemctl restart cloudflared
-                """
-            }
-        }
+stage('Deploy') {
+    steps {
+        sh """
+            cd ${PROJECT_DIR}
+            git pull origin main
+            docker compose -f ${COMPOSE_FILE} up -d --remove-orphans
+            docker image prune -f
+            sudo nginx -t && sudo systemctl reload nginx
+            sudo systemctl is-active cloudflared || sudo systemctl restart cloudflared
+        """
+    }
+}
 
     } 
 
