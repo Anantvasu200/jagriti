@@ -1,4 +1,3 @@
-require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const helmet = require('helmet');
@@ -21,15 +20,15 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(helmet());
+app.set('trust proxy', 1)
 app.use(cors());
-app.use(express.json());
+express.json({ limit: '10mb' })
 
 // Rate Limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per windowMs
   message: 'Too many requests from this IP, please try again after 15 minutes',
-  validate: { trustProxy: false }
 });
 app.use('/api/', limiter);
 
