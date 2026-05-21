@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mail, Lock, User, Phone, Eye, EyeOff, ShieldCheck, Check } from 'lucide-react';
+import { API_BASE_URL } from '../utils/apiConfig';
 
 export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialMode = 'login' }) {
   const [isSignUp, setIsSignUp] = useState(initialMode === 'signup');
@@ -58,7 +59,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialMode 
     }
     setError('');
     try {
-      const res = await fetch('http://localhost:5000/api/auth/otp/mobile', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/otp/mobile`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mobileNumber })
@@ -83,7 +84,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialMode 
     }
     setError('');
     try {
-      const res = await fetch('http://localhost:5000/api/auth/otp/email', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/otp/email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
@@ -107,8 +108,8 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialMode 
     setLoading(true);
 
     const url = isSignUp 
-      ? 'http://localhost:5000/api/auth/signup' 
-      : 'http://localhost:5000/api/auth/signin';
+      ? `${API_BASE_URL}/api/auth/signup` 
+      : `${API_BASE_URL}/api/auth/signin`;
 
     const payload = isSignUp
       ? { username, name, surname, gender, mobileNumber, email, password, mobileOtp, emailOtp }

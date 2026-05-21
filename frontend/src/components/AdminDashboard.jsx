@@ -18,6 +18,7 @@ import {
   ArrowRight,
   TrendingDown
 } from 'lucide-react';
+import { API_BASE_URL } from '../utils/apiConfig';
 
 export default function AdminDashboard({ currentUser, navigateTo, showNotification, onSignOut }) {
   const [activeTab, setActiveTab] = useState('overview');
@@ -42,7 +43,7 @@ export default function AdminDashboard({ currentUser, navigateTo, showNotificati
     try {
       setLoading(true);
       const token = localStorage.getItem('jagriti_token');
-      const response = await fetch('http://localhost:5000/api/admin/metrics', {
+      const response = await fetch(`${API_BASE_URL}/api/admin/metrics`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

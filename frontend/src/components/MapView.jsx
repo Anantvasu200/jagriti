@@ -12,6 +12,7 @@ import ReportModal from './ReportModal'
 import LocateMeButton from './LocateMeButton'
 import socket from '../utils/socket'
 import { fetchSafeSpots } from '../utils/OverpassService'
+import { API_BASE_URL } from '../utils/apiConfig'
 
 const CRIME_COLORS = {
   theft: '#f97316',
@@ -532,7 +533,7 @@ export default function MapView({
   // Fetch live incidents from backend
   const fetchIncidents = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/incidents')
+      const response = await fetch(`${API_BASE_URL}/api/incidents`)
       const data = await response.json()
       if (data.status === 'success') {
         setIncidents(data.data)
@@ -558,7 +559,7 @@ export default function MapView({
       }
 
       try {
-        const response = await fetch(`http://localhost:5000/api/incidents/${id}/confirm`, {
+        const response = await fetch(`${API_BASE_URL}/api/incidents/${id}/confirm`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId })
@@ -605,7 +606,7 @@ export default function MapView({
       const msg = `Found ${matchIncidents.length} incidents for the selected criteria.`;
       
       // Log to backend IDE terminal
-      fetch('http://localhost:5000/api/log', {
+      fetch(`${API_BASE_URL}/api/log`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: msg, data: matchIncidents })

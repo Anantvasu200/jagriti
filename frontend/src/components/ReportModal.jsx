@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X, MapPin, Loader2, AlertTriangle } from 'lucide-react'
+import { API_BASE_URL } from '../utils/apiConfig'
 
 export default function ReportModal({ isOpen, onClose, onReportSuccess, userLocation }) {
   const [formData, setFormData] = useState({
@@ -82,7 +83,7 @@ export default function ReportModal({ isOpen, onClose, onReportSuccess, userLoca
         localStorage.setItem('jagriti_user_id', userId)
       }
 
-      const response = await fetch('http://localhost:5000/api/incidents/report', {
+      const response = await fetch(`${API_BASE_URL}/api/incidents/report`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...formData, userId })

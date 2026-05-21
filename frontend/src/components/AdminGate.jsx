@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ShieldAlert, ArrowLeft, KeyRound, Mail, Lock } from 'lucide-react';
+import { API_BASE_URL } from '../utils/apiConfig';
 
 export default function AdminGate({ onAuthSuccess, navigateTo, showNotification }) {
   const [email, setEmail] = useState('');
@@ -18,7 +19,7 @@ export default function AdminGate({ onAuthSuccess, navigateTo, showNotification 
       setLoading(true);
       setError(null);
 
-      const response = await fetch('http://localhost:5000/api/auth/signin', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/signin`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

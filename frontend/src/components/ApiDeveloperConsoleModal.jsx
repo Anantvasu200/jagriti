@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X, Key, Terminal, Code, Copy, Check, ShieldCheck, HelpCircle } from 'lucide-react'
+import { API_BASE_URL } from '../utils/apiConfig'
 
 export default function ApiDeveloperConsoleModal({ isOpen, onClose }) {
   const [developerName, setDeveloperName] = useState('')
@@ -23,7 +24,7 @@ export default function ApiDeveloperConsoleModal({ isOpen, onClose }) {
 
     setLoading(true)
     try {
-      const response = await fetch('http://localhost:5000/api/developer/keys', {
+      const response = await fetch(`${API_BASE_URL}/api/developer/keys`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ developerName })
@@ -190,7 +191,7 @@ export default function ApiDeveloperConsoleModal({ isOpen, onClose }) {
                   <div className="text-[0.58rem] font-bold text-slate-400 uppercase tracking-wide">Sample Integration</div>
                   <div className="bg-slate-950 p-2.5 rounded-lg border border-white/5 font-mono text-[0.55rem] text-slate-300 overflow-x-auto leading-relaxed">
                     <div>curl -H <span className="text-emerald-400">"x-api-key: YOUR_API_KEY"</span> \</div>
-                    <div className="pl-5">http://localhost:5000/api/v1/incidents?type=harassment</div>
+                    <div className="pl-5">{`${API_BASE_URL || window.location.origin}/api/v1/incidents?type=harassment`}</div>
                   </div>
                 </div>
 

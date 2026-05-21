@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { API_BASE_URL } from '../utils/apiConfig';
 import {
   Map, Wallet, AlertCircle, Siren, Eye, Calendar, Search,
   ShieldAlert, Share2, Plus, Trash2, Phone, ChevronDown, ChevronUp,
@@ -673,7 +674,7 @@ export default function Sidebar({
 
           <div className="border-t border-slate-200 pt-3 flex flex-col gap-2">
             <button
-              onClick={() => window.open('http://localhost:5000/api/reports/safety', '_blank')}
+              onClick={() => window.open(`${API_BASE_URL}/api/reports/safety`, '_blank')}
               className="w-full py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition-all duration-150 cursor-pointer flex items-center justify-center gap-1.5 shadow-sm border-none"
             >
               Export Safety PDF Report

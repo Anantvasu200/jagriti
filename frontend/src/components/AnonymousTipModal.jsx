@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { X, ShieldAlert, CheckCircle2, AlertTriangle, Loader2, MapPin } from 'lucide-react'
+import { API_BASE_URL } from '../utils/apiConfig'
 
 export default function AnonymousTipModal({ isOpen, onClose, userLocation, showNotification, refreshIncidents }) {
   const [title, setTitle] = useState('')
@@ -78,7 +79,7 @@ export default function AnonymousTipModal({ isOpen, onClose, userLocation, showN
     const anonUserId = 'anon_tip_' + Math.random().toString(36).substring(2, 12)
 
     try {
-      const response = await fetch('http://localhost:5000/api/incidents/report', {
+      const response = await fetch(`${API_BASE_URL}/api/incidents/report`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
