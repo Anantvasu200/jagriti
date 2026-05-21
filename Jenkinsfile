@@ -156,10 +156,13 @@ stage('Tests') {
             }
         }
 
-        // ── Deploy (main branch only) ───────────────────────────────────
+    // ── Deploy ───────────────────────────────────────────────
         stage('Deploy') {
             when {
-                branch 'main'
+                anyOf {
+                    branch 'main'
+                    expression { env.BRANCH_NAME == null }
+                }
             }
             steps {
                 sh """
@@ -172,7 +175,8 @@ stage('Tests') {
                 """
             }
         }
-    }
+
+    } 
 
     // ── Notifications ──────────────────────────────────────────────────
     post {
@@ -186,7 +190,6 @@ stage('Tests') {
             echo "❌ Build failed — check archived scan reports"
         }
         always {
-            // Clean up shared venv after every run
             sh "rm -rf ${VENV_PATH} || true"
             cleanWs()
         }
