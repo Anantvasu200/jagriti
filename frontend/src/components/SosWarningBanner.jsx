@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { AlertOctagon, Volume2, ShieldAlert } from 'lucide-react'
 import socket from '../utils/socket'
 
@@ -22,6 +22,7 @@ export default function SosWarningBanner() {
   const [activeAlerts, setActiveAlerts] = useState([])
   const [userLocation, setUserLocation] = useState(null)
   const [warningMessage, setWarningMessage] = useState(null)
+  const notifiedBeaconsRef = useRef(new Set())
 
   // Web Audio warning beep
   const playWarningChirp = () => {
@@ -91,6 +92,7 @@ export default function SosWarningBanner() {
 
     socket.on('sos:resolved', (data) => {
       setActiveAlerts(prev => prev.filter(alert => alert.userId !== data.userId))
+      notifiedBeaconsRef.current.delete(data.userId)
     })
 
     return () => {
@@ -133,6 +135,30 @@ export default function SosWarningBanner() {
     // Trigger warning banner only if the closest SOS is within 500 meters
     if (closestAlert && minDistance <= 500) {
       setWarningMessage(closestAlert)
+      
+      // Trigger native browser notification once per beacon session
+      if (!notifiedBeaconsRef.current.has(closestAlert.userId)) {
+        notifiedBeaconsRef.current.add(closestAlert.userId)
+        
+        if ('Notification' in window && Notification.permission === 'granted') {
+          const bodyText = `${closestAlert.userName || 'Anonymous User'} triggered an SOS (${closestAlert.type}) ${closestAlert.distance}m away. Stay alert!`;
+          try {
+            navigator.serviceWorker.ready.then(reg => {
+              reg.showNotification('🚨 JAGRITI EMERGENCY SOS 🚨', {
+                body: bodyText,
+                icon: '/icon-192x192.png',
+                vibrate: [300, 100, 300, 100, 300],
+                tag: `sos-alert-${closestAlert.userId}`
+              })
+            })
+          } catch (e) {
+            new Notification('🚨 JAGRITI EMERGENCY SOS 🚨', {
+              body: bodyText,
+              icon: '/icon-192x192.png'
+            })
+          }
+        }
+      }
     } else {
       setWarningMessage(null)
     }
@@ -166,7 +192,7 @@ export default function SosWarningBanner() {
             </span>
           </div>
           <p className="text-xs font-semibold text-slate-100 leading-tight">
-            An active SOS beacon for <span className="underline font-bold text-white capitalize">{warningMessage.type}</span> is broadcasting coordinates near you. Be alert!
+            <span className="font-extrabold text-white capitalize">{warningMessage.userName || 'Anonymous User'}</span> triggered an SOS beacon for <span className="underline font-bold text-white capitalize">{warningMessage.type}</span> nearby. Assist if safe!
           </p>
         </div>
 

@@ -23,13 +23,14 @@ const initSocket = (server) => {
 
     // Listen for SOS trigger
     socket.on('sos:trigger', async (data) => {
-      const { userId, lat, lng, type, city } = data;
-      logger.warn(`🚨 SOS triggered by user ${userId} at [${lat}, ${lng}] of type ${type}`);
+      const { userId, userName, lat, lng, type, city } = data;
+      logger.warn(`🚨 SOS triggered by user ${userId} (${userName || 'Anonymous'}) at [${lat}, ${lng}] of type ${type}`);
 
       const beaconId = `beacon_${userId}`;
       const beaconData = {
         id: beaconId,
         userId,
+        userName: userName || 'Anonymous User',
         lat,
         lng,
         type: type || 'other',

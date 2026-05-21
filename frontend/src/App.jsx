@@ -242,11 +242,13 @@ function App() {
     alarmGenerator.start()
 
     const userId = getUserId()
+    const userName = currentUser ? (currentUser.name || currentUser.username) : 'Anonymous User'
     setSosCoords(userLocation)
 
     // Trigger immediate socket.io alarm with user's actual location
     socket.emit('sos:trigger', {
       userId,
+      userName,
       lat: userLocation.lat,
       lng: userLocation.lng,
       type,
