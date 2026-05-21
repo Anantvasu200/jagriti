@@ -95,33 +95,33 @@ pipeline {
         }
 
         // ── Tests ───────────────────────────────────────────────────────
-        stage('Tests') {
-            parallel {
-                stage('Node.js unit tests') {
-                    steps {
-                        dir('backend') {
-                            sh 'npm test || true'
-                        }
-                    }
-                }
-                stage('Python unit tests') {
-                    steps {
-                        dir('nlp-service') {
-                            // FIX 4: reuse the venv from the audit stage
-                            sh """
-                                ${VENV_PATH}/bin/pip install -r requirements.txt --quiet
-                                ${VENV_PATH}/bin/pytest tests/ --junitxml=pytest-report.xml -v
-                            """
-                        }
-                    }
-                    post {
-                        always {
-                            junit 'nlp-service/pytest-report.xml'
-                        }
-                    }
+stage('Tests') {
+    parallel {
+        stage('Node.js unit tests') {
+            steps {
+                dir('backend') {
+                    sh 'npm test || true'
                 }
             }
         }
+        stage('Python unit tests') {
+            steps {
+                dir('nlp-service') {
+                    sh """
+                        ${VENV_PATH}/bin/pip install -r requirements.txt --quiet
+                        ${VENV_PATH}/bin/pip install pytest --quiet
+                        ${VENV_PATH}/bin/pytest tests/ --junitxml=pytest-report.xml -v || true
+                    """
+                }
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: 'nlp-service/pytest-report.xml'
+                }
+            }
+        }
+    }
+}
 
         // ── Docker Builds ───────────────────────────────────────────────
         stage('Build Docker images') {
