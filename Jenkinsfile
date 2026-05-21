@@ -127,7 +127,7 @@ stage('Tests') {
         stage('Build Docker images') {
             steps {
                 sh """
-                    docker compose -f ${COMPOSE_FILE} build \
+                    docker compose -f docker-compose.yml build \
                         --build-arg BUILD_DATE=\$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
                         --build-arg GIT_COMMIT=${env.GIT_COMMIT}
                 """
@@ -162,7 +162,7 @@ stage('Deploy') {
         sh """
             cd ${PROJECT_DIR}
             git pull origin main
-            docker compose -f ${COMPOSE_FILE} up -d --remove-orphans
+            docker compose -f ${COMPOSE_FILE} up -d --build --remove-orphans
             docker image prune -f
             sudo nginx -t && sudo systemctl reload nginx
             sudo systemctl is-active cloudflared || sudo systemctl restart cloudflared
