@@ -1,7 +1,5 @@
 version: "3.9"
-
 services:
-
   frontend:
     build: ./frontend
     container_name: jagriti_frontend
@@ -14,20 +12,23 @@ services:
       - backend
     networks:
       - jagriti_net
-
   backend:
     build: ./backend
     container_name: jagriti_backend
     restart: unless-stopped
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - PORT=5000
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_NAME=jagriti
       - DB_USER=jagriti
       - DB_PASSWORD=${DB_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASS=${EMAIL_PASS}
       - NLP_SERVICE_URL=http://nlp-service:8000
+      - DB_SSL=false
     ports:
       - "5000:5000"
     depends_on:
@@ -35,7 +36,6 @@ services:
       - chromadb
     networks:
       - jagriti_net
-
   nlp-service:
     build: ./nlp-service
     container_name: jagriti_nlp
@@ -47,6 +47,8 @@ services:
       - DB_USER=jagriti
       - DB_PASSWORD=${DB_PASSWORD}
       - CHROMADB_URL=http://chromadb:8001
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASS=${EMAIL_PASS}
       - LIBRETRANSLATE_URL=http://libretranslate:5500
     ports:
       - "8000:8000"
@@ -56,7 +58,6 @@ services:
       - libretranslate
     networks:
       - jagriti_net
-
   postgres:
     image: postgis/postgis:15-3.3
     container_name: jagriti_postgres
@@ -72,7 +73,6 @@ services:
       - "5432:5432"
     networks:
       - jagriti_net
-
   chromadb:
     image: chromadb/chroma:latest
     container_name: jagriti_chromadb
@@ -83,7 +83,6 @@ services:
       - "8001:8000"
     networks:
       - jagriti_net
-
   libretranslate:
     image: libretranslate/libretranslate:latest
     container_name: jagriti_translate
@@ -96,7 +95,6 @@ services:
       - libretranslate_data:/home/libretranslate/.local
     networks:
       - jagriti_net
-
   nginx:
     image: nginx:alpine
     container_name: jagriti_nginx
@@ -111,7 +109,6 @@ services:
       - backend
     networks:
       - jagriti_net
-
   prometheus:
     image: prom/prometheus:latest
     container_name: jagriti_prometheus
@@ -123,7 +120,6 @@ services:
       - "9090:9090"
     networks:
       - jagriti_net
-
   grafana:
     image: grafana/grafana:latest
     container_name: jagriti_grafana
@@ -136,14 +132,12 @@ services:
       - "3001:3000"
     networks:
       - jagriti_net
-
 volumes:
   postgres_data:
   chroma_data:
   libretranslate_data:
   prometheus_data:
   grafana_data:
-
 networks:
   jagriti_net:
     driver: bridge

@@ -7,3 +7,4 @@ frontend/build/
 *.log
 .DS_Store
 .vscode/
+*.bak
