@@ -161,11 +161,20 @@ stage('Deploy') {
     steps {
         sh """
             cd ${PROJECT_DIR}
-            git pull origin main
-            docker compose -f ${COMPOSE_FILE} up -d --build --remove-orphans
-            docker image prune -f
-            sudo nginx -t && sudo systemctl reload nginx
-            sudo systemctl is-active cloudflared || sudo systemctl restart cloudflared
+            
+            # Fetch latest without write permissions
+            git fetch origin main
+            git reset --hard origin/main
+            
+            # Rebuild and restart containers
+            docker compose -f ${COMPOSE_FILE} down
+            docker compose -f ${COMPOSE_FILE} build --no-cache
+            docker compose -f ${COMPOSE_FILE} up -d
+            
+            # Cleanup old images
+            docker image prune -af --filter "until=72h"
+            
+            echo "Deployment successful"
         """
     }
 }
