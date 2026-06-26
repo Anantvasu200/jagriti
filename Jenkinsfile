@@ -159,23 +159,26 @@ stage('Tests') {
     // ── Deploy ───────────────────────────────────────────────
 stage('Deploy') {
     steps {
-        sh """
+        sh '''
+            set -e
             cd ${PROJECT_DIR}
             
-            # Fetch latest without write permissions
-            git fetch origin main
-            git reset --hard origin/main
+            # Ensure .git is writable by Jenkins
+            chmod -R g+w .git 2>/dev/null || true
             
-            # Rebuild and restart containers
-            docker compose -f ${COMPOSE_FILE} down
+            # Skip git ops — code already in workspace from Checkout
+            echo "Using code from Checkout stage..."
+            
+            # Rebuild and restart
+            docker compose -f ${COMPOSE_FILE} down || true
             docker compose -f ${COMPOSE_FILE} build --no-cache
             docker compose -f ${COMPOSE_FILE} up -d
             
-            # Cleanup old images
+            # Cleanup
             docker image prune -af --filter "until=72h"
             
-            echo "Deployment successful"
-        """
+            echo "Deployment complete — UI live at app.jagriti.online"
+        '''
     }
 }
 
