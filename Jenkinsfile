@@ -169,15 +169,15 @@ stage('Deploy') {
             # Skip git ops — code already in workspace from Checkout
             echo "Using code from Checkout stage..."
             
-            # Rebuild and restart
+            # Rebuild and restart (WITH CACHE)
             docker compose -f ${COMPOSE_FILE} down || true
-            docker compose -f ${COMPOSE_FILE} build --no-cache
+            docker compose -f ${COMPOSE_FILE} build
             docker compose -f ${COMPOSE_FILE} up -d
             
             # Cleanup
             docker image prune -af --filter "until=72h"
             
-            echo "Deployment complete — UI live at app.jagriti.online"
+            echo "✅ Deployment complete — UI live at app.jagriti.online"
         '''
     }
 }
