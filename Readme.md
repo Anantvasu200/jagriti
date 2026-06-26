@@ -1,236 +1,159 @@
-# 🔦 Jagriti — Know Your Surroundings. Stay Safe.
+# Jagriti (जागृति) — Know Your Surroundings. Stay Safe.
 
-> **Jagriti** (जागृति — *Awakening*) is a free, open-source crime awareness and safety heatmap platform built specifically for India.
+> **Jagriti** means *Awakening* in Hindi.
 
-It empowers women, daily commuters, and travelers to make informed decisions about their surroundings by visualizing real crime data on an interactive map.
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Docker](https://img.shields.io/badge/Docker-Compose-blue)](https://docs.docker.com/compose/)
-[![Cost](https://img.shields.io/badge/Monthly%20Cost-%E2%82%B90-brightgreen)]()
+Jagriti is a free, open-source crime awareness and safety heatmap platform built specifically for India. It empowers women, daily commuters, and travelers to make informed decisions about their surroundings by visualizing real crime data on an interactive map.
 
 ---
 
-## 🚨 The Problem
+## The Problem
 
-India has a serious public safety awareness gap. Crime data exists — in NCRB reports, in daily newspapers, in police records — but it is **scattered, inaccessible, and never visualized** in a way that helps ordinary people make real-time decisions.
+India has a serious public safety awareness gap. Crime data exists — in NCRB reports, in daily newspapers, in police records — but it is scattered, inaccessible, and never visualized in a way that helps ordinary people make real-time decisions.
 
-A woman planning to travel alone at night, a tourist visiting an unfamiliar city, or a family relocating to a new neighborhood has no reliable tool to understand the safety profile of an area.
-
-**Jagriti exists to close that gap.**
+A woman planning to travel alone at night, a tourist visiting an unfamiliar city, or a family relocating to a new neighborhood has no reliable tool to understand the safety profile of an area. Jagriti exists to close that gap.
 
 ---
 
-## ✨ Core Features
+## Live Demo
+
+🌐 **[app.jagriti.online](https://app.jagriti.online)**
+
+---
+
+## Core Features
 
 ### 🗺️ Interactive Safety Heatmap
-A live heatmap built on **Leaflet.js + OpenStreetMap** showing crime density across cities and neighborhoods. Users can zoom into any area and see incident markers with details — crime type, date, source, and location. Color intensity reflects crime frequency.
+A live heatmap built on Leaflet.js and OpenStreetMap showing crime density across cities and neighborhoods. Users can zoom into any area and see incident markers with details — crime type, date, source, and location.
 
-### 📡 Multi-Source Data Pipeline
-Crime data is automatically collected daily from three layers:
-- **RSS Feeds & Scraping** — Times of India, NDTV, Hindustan Times, Amar Ujala, Dainik Bhaskar
-- **NCRB Historical Data** — District-level crime statistics from the past 5 years
-- **Community Reports** — Anonymous user submissions directly on the map
+### 📰 Multi-Source Data Pipeline
+Crime data is automatically collected daily from:
+- **RSS Feeds** — Times of India, NDTV, Hindustan Times, Amar Ujala, Dainik Bhaskar
+- **NCRB Historical Data** — District-level crime statistics (~11,344 pins ingested)
+- **Community Reports** — Anonymous user-submitted incidents
 
 ### 🧠 NLP Processing Pipeline
-Every scraped article is processed through a Python-based NLP pipeline:
-- **spaCy** extracts crime type, location names, and dates
-- **LibreTranslate** translates Hindi articles to English before processing
-- **Nominatim / OSM** geocodes extracted location names to GPS coordinates
-- **PostgreSQL + PostGIS** stores all incidents for spatial queries
+Every scraped article is processed through a Python FastAPI NLP service using spaCy. The pipeline extracts crime type, location, and date. Hindi articles are translated via LibreTranslate before processing. Locations are geocoded using Nominatim + OpenStreetMap and stored in PostgreSQL with PostGIS.
 
-### 👥 Community Reporting
-Any user can anonymously report a safety incident by dropping a pin and selecting a category: theft, harassment, assault, suspicious activity, unsafe road, or other. Reports gain a **verified badge** when 3+ users independently report the same area.
+### 📍 Community Reporting
+Any user can anonymously drop a pin on the map and report a safety incident. Reports earn a **verified badge** when 3+ independent users report the same area — creating a real-time crowd-sourced safety layer.
 
 ### 🤖 AI Safety Assistant (RAG)
-Ask plain-language questions in Hindi or English:
-> *"Is Lajpat Nagar safe at night for women?"*
-> *"What incidents have happened in Connaught Place recently?"*
+Ask natural language questions like *"Is Lajpat Nagar safe at night?"* The RAG pipeline uses ChromaDB for vector storage and retrieves grounded answers from actual incident data — no hallucinations.
 
-The system uses a **RAG pipeline** — ChromaDB stores incident data as vector embeddings, retrieves the most relevant incidents for each query, and passes them to an LLM for a clear, sourced answer. **Every answer is grounded in actual stored data.**
+### 🆘 SOS & Safety Alerts
+Proximity alerts notify users when they enter high-incident zones. SOS and live location sharing planned for next release.
 
-### 📊 Safety Score
-Every area gets an automatically calculated safety score **(1–10)** with separate scores for **female safety** and **traveler safety**. Scores factor in incident frequency, crime severity, recency, and community report density. Recalculated daily.
+### 🔐 OTP-Verified Auth
+Email OTP authentication for verified community reporting.
 
 ---
 
-## 🏗️ Architecture
+## Tech Stack
+
+```
+Frontend          →  React + Vite + Tailwind CSS + Leaflet.js (PWA)
+Backend API       →  Node.js + Express + Sequelize ORM
+NLP Service       →  Python FastAPI + spaCy (en_core_web_md) + APScheduler
+Database          →  PostgreSQL + PostGIS
+Vector Store      →  ChromaDB
+Translation       →  LibreTranslate (self-hosted)
+Geocoding         →  Nominatim (OpenStreetMap)
+Scraping          →  Feedparser + BeautifulSoup
+Containerization  →  Docker + Docker Compose (9 containers)
+Reverse Proxy     →  Nginx
+Tunnel / SSL      →  Cloudflare Tunnel
+CI/CD             →  Jenkins (self-hosted)
+Monitoring        →  Prometheus + Grafana
+Deployment        →  Self-hosted Ubuntu Server
+```
+
+**Total monthly infrastructure cost — ₹0**
+
+---
+
+## Architecture
 
 ```
 User (Browser)
       ↓
-Nginx (Reverse Proxy + SSL)
+Cloudflare Tunnel (SSL + DDoS protection)
       ↓
-React Frontend (Leaflet Map)
+Nginx Reverse Proxy (port 8081)
+      ↓
+React Frontend (Leaflet Map + PWA)
       ↓
 Node.js Backend API
-    ↓           ↓
-PostgreSQL    Python FastAPI
-+ PostGIS     NLP Service
-                ↓
-           spaCy + Nominatim
-           ChromaDB (RAG)
-           LibreTranslate
+    ↓              ↓
+PostgreSQL      Python FastAPI
++ PostGIS       NLP Service
+                    ↓
+               spaCy + Nominatim
+               ChromaDB (RAG)
+               LibreTranslate
 ```
 
 ---
 
-## 🛠️ Tech Stack — 100% Free & Open Source
+## Data Sources
 
-| Layer | Technology |
-|---|---|
-| Frontend | React + Leaflet.js + OpenStreetMap |
-| Backend API | Node.js + Express |
-| NLP Service | Python FastAPI |
-| Database | PostgreSQL + PostGIS |
-| Vector Store | ChromaDB |
-| NLP Engine | spaCy |
-| Geocoding | Nominatim (OpenStreetMap) |
-| Translation | LibreTranslate |
-| Scraping | Feedparser + BeautifulSoup |
-| Containers | Docker + Docker Compose |
-| Reverse Proxy | Nginx |
-| SSL | Let's Encrypt (Certbot) |
-| CI/CD | GitHub Actions |
-| Monitoring | Prometheus + Grafana |
-| Deployment | Home Server / AWS EC2 t2.micro |
-
-> **Total monthly infrastructure cost — ₹0**
+| Source | Type |
+|--------|------|
+| TOI, NDTV, HT, Amar Ujala, Dainik Bhaskar | RSS Feeds (daily) |
+| NCRB Reports | Historical district-level data |
+| User submissions | Anonymous community reports |
 
 ---
 
-## 📦 Data Sources
-
-| Source | Description |
-|---|---|
-| News RSS Feeds | TOI, NDTV, Hindustan Times, Amar Ujala, Dainik Bhaskar |
-| NCRB Data | Historical district-level crime statistics (5 years) |
-| Community Reports | Anonymous user submissions via the platform |
-
----
-
-## 🚀 Local Setup
+## Running Locally
 
 ### Prerequisites
-- Docker & Docker Compose
+- Docker + Docker Compose
 - Git
 
-### Clone & Run
+### Setup
 
 ```bash
-git clone https://github.com/yourname/jagriti.git
+git clone https://github.com/Anantvasu200/jagriti.git
 cd jagriti
 cp .env.example .env
-docker compose up -d
+# Fill in your credentials in .env
+docker compose up --build
 ```
 
-Open `http://localhost:3000` in your browser.
-
-### Services
-
-| Service | Port |
-|---|---|
-| React Frontend | 3000 |
-| Node.js API | 5000 |
-| Python NLP Service | 8000 |
-| PostgreSQL | 5432 |
-| ChromaDB | 8001 |
-| LibreTranslate | 5500 |
-| Prometheus | 9090 |
-| Grafana | 3001 |
+App runs at `http://localhost:3000`
 
 ---
 
-## 🖥️ Self-Hosted Deployment
+## Who Is It For
 
-Jagriti is designed to run on a **single Linux server** — home lab, VPS, or cloud VM.
-
-### System Requirements
-
-| Resource | Minimum |
-|---|---|
-| CPU | 2 cores |
-| RAM | 3 GB |
-| Storage | 50 GB |
-| OS | Ubuntu 22.04 / 24.04 |
-
-### Production Deployment
-
-```bash
-# On your server
-git clone https://github.com/yourname/jagriti.git
-cd jagriti
-
-# Configure environment
-cp .env.example .env
-nano .env   # Set your domain, DB passwords, API keys
-
-# Start all services
-docker compose -f docker-compose.prod.yml up -d
-
-# Setup SSL (replace with your domain)
-certbot --nginx -d jagriti.in
-```
-
-GitHub Actions handles automated deployment on every push to `main`.
+- Women traveling alone or commuting at night
+- Tourists and travelers visiting unfamiliar Indian cities
+- Families relocating to a new neighborhood
+- NGOs and researchers working on public safety
+- Journalists covering crime and safety issues
+- Corporate HR teams managing employee safety
 
 ---
 
-## 👥 Who Is It For
+## Social Impact
 
-- 👩 Women traveling alone or commuting at night
-- ✈️ Tourists and travelers visiting unfamiliar Indian cities
-- 🏠 Families relocating to a new neighborhood
-- 🏢 NGOs and researchers working on public safety
-- 📰 Journalists covering crime and safety issues
-- 💼 Corporate HR teams managing employee safety in field locations
+India reports over **400,000 crimes against women annually** (NCRB). Most incidents never reach public awareness in a structured, searchable format. Jagriti makes this data visible, accessible, and actionable.
 
 ---
 
-## 💰 Monetization Path
+## Project Status
 
-Jagriti is **free for individual users forever**. Revenue potential:
+🟢 **Live** — Self-hosted, fully containerized, CI/CD via Jenkins
 
-- **API Licensing** — Travel platforms like MakeMyTrip, Airbnb
-- **White-Label Deployments** — NGOs on grant funding
-- **Safety Report Subscriptions** — Corporate HR and fleet management teams
-- **Risk Assessment Reports** — Insurance companies at district/city level
+Built by one developer. Open source. Zero infrastructure cost. Designed to run in production using real DevOps tooling — Docker, Nginx, Cloudflare, PostgreSQL, Python, Node.js.
 
 ---
 
-## 🌍 Social Impact
+## License
 
-India reports over **400,000 crimes against women annually** (NCRB). Most incidents never reach public awareness in a structured, searchable format.
-
-Jagriti makes this data **visible, accessible, and actionable** — turning scattered reports into a tool that helps people stay safe and make informed decisions every single day.
+MIT — Free to use, fork, and contribute.
 
 ---
 
-## 🤝 Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request.
-
-```bash
-# Fork → Clone → Branch → Commit → PR
-git checkout -b feature/your-feature-name
-git commit -m "feat: add your feature"
-git push origin feature/your-feature-name
-```
-
----
-
-## 📄 License
-
-MIT License — see [LICENSE](LICENSE) for details.
-
----
-
-## 🔗 Links
-
-- **GitHub:** [github.com/yourname/jagriti](https://github.com/yourname/jagriti)
-- **Domain:** [jagriti.in](https://jagriti.in) *(production)* | [jagriti.duckdns.org](https://jagriti.duckdns.org) *(free tier)*
-
----
-
-<div align="center">
-  <sub>Built with ❤️ for India's safety. One developer. Zero cost. Real impact.</sub>
-</div>
+**GitHub:** [github.com/Anantvasu200/jagriti](https://github.com/Anantvasu200/jagriti)  
+**Live:** [app.jagriti.online](https://app.jagriti.online)
