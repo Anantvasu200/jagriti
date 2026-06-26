@@ -8,3 +8,5 @@ frontend/build/
 .DS_Store
 .vscode/
 *.bak
+# Deployment fix — git permissions resolved
+# Deployment fix — git permissions resolved
