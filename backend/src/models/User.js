@@ -42,6 +42,11 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING,
       allowNull: false,
       defaultValue: 'user'
+    },
+    language: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: 'en'
     }
   }, {
     tableName: 'users',

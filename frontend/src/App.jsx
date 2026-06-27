@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Menu, X } from 'lucide-react'
 import MapView from './components/MapView'
 import Sidebar from './components/Sidebar'
@@ -12,8 +13,11 @@ import AnonymousTipModal from './components/AnonymousTipModal'
 import AuthModal from './components/AuthModal'
 import AdminGate from './components/AdminGate'
 import AdminDashboard from './components/AdminDashboard'
+import { LocationProcessor } from './utils/locationService'
+import { API_BASE_URL } from './utils/apiConfig'
 
 function App() {
+  const { i18n } = useTranslation()
   const mapInstanceRef = useRef(null)
   const [filters, setFilters] = useState({
     crimeType: 'all',
@@ -91,17 +95,54 @@ function App() {
     return id
   }
 
-  // --- Load Saved Session User ---
+  const locationProcessorRef = useRef(null)
+  if (!locationProcessorRef.current) {
+    locationProcessorRef.current = new LocationProcessor()
+  }
+
+  // --- Load Saved Session User & Language ---
   useEffect(() => {
     const saved = localStorage.getItem('jagriti_user')
     if (saved) {
       try {
-        setCurrentUser(JSON.parse(saved))
+        const parsed = JSON.parse(saved)
+        setCurrentUser(parsed)
+        if (parsed.language) {
+          setLanguage(parsed.language)
+        }
       } catch (e) {
         localStorage.removeItem('jagriti_user')
       }
     }
   }, [])
+
+  // --- Synchronize Language Preference ---
+  useEffect(() => {
+    i18n.changeLanguage(language)
+    localStorage.setItem('jagriti_language', language)
+    if (currentUser) {
+      const token = localStorage.getItem('jagriti_token')
+      if (token) {
+        fetch(`${API_BASE_URL}/api/auth/settings`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ language })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'success') {
+            const updatedUser = { ...currentUser, language: data.user.language }
+            setCurrentUser(updatedUser)
+            localStorage.setItem('jagriti_user', JSON.stringify(updatedUser))
+          }
+        })
+        .catch(err => console.error('Failed to sync language to backend settings:', err))
+      }
+    }
+  }, [language, currentUser?.id])
 
   // --- Check URL Path Routing for direct Signin/Signup ---
   useEffect(() => {
@@ -117,7 +158,7 @@ function App() {
     }
   }, []);
 
-  // --- Geolocation Watcher ---
+  // --- Geolocation Watcher with Kalman Filter & Smoothing ---
   useEffect(() => {
     if (!navigator.geolocation) {
       setLocationStatus('denied')
@@ -128,10 +169,12 @@ function App() {
     setLocationStatus('loading')
 
     const handleSuccess = (position) => {
-      const { latitude, longitude } = position.coords
-      setUserLocation({ lat: latitude, lng: longitude })
-      setLocationStatus('granted')
-      setLocationError(null)
+      const processed = locationProcessorRef.current.process(position)
+      if (processed) {
+        setUserLocation(processed)
+        setLocationStatus('granted')
+        setLocationError(null)
+      }
     }
 
     const handleError = (error) => {
@@ -145,7 +188,6 @@ function App() {
       }
     }
 
-    // Set up continuous watchPosition tracking
     const watchId = navigator.geolocation.watchPosition(
       handleSuccess,
       handleError,
@@ -163,7 +205,14 @@ function App() {
   useEffect(() => {
     const userId = getUserId()
     if (isSharingLocation && userLocation) {
-      socket.emit('sharing:start', { userId, lat: userLocation.lat, lng: userLocation.lng })
+      socket.emit('sharing:start', { 
+        userId, 
+        lat: userLocation.lat, 
+        lng: userLocation.lng,
+        accuracy: userLocation.accuracy,
+        confidence: userLocation.confidence,
+        isStable: userLocation.isStable
+      })
     } else if (!isSharingLocation) {
       socket.emit('sharing:stop', { userId })
     }
@@ -172,7 +221,14 @@ function App() {
   useEffect(() => {
     const userId = getUserId()
     if (isSharingLocation && userLocation) {
-      socket.emit('sharing:update_location', { userId, lat: userLocation.lat, lng: userLocation.lng })
+      socket.emit('sharing:update_location', { 
+        userId, 
+        lat: userLocation.lat, 
+        lng: userLocation.lng,
+        accuracy: userLocation.accuracy,
+        confidence: userLocation.confidence,
+        isStable: userLocation.isStable
+      })
     }
   }, [userLocation, isSharingLocation])
 
@@ -251,6 +307,9 @@ function App() {
       userName,
       lat: userLocation.lat,
       lng: userLocation.lng,
+      accuracy: userLocation.accuracy,
+      confidence: userLocation.confidence,
+      isStable: userLocation.isStable,
       type,
       city: 'Live Emergency Location'
     })
@@ -280,7 +339,10 @@ function App() {
         socket.emit('sos:update_location', {
           userId,
           lat: userLocation.lat,
-          lng: userLocation.lng
+          lng: userLocation.lng,
+          accuracy: userLocation.accuracy,
+          confidence: userLocation.confidence,
+          isStable: userLocation.isStable
         })
       } else {
         console.warn("SOS active but user location dropped temporarily.")
@@ -336,113 +398,91 @@ function App() {
           />
         )
       ) : (
-        <>
-          {/* ── Floating Header ─────────────────────────────────────────── */}
-          <header className="
-            absolute top-4 left-4 right-4 md:right-auto z-[1000]
-            flex items-center gap-2 md:gap-3
-          ">
-            {/* Toggle Sidebar Button */}
-            <button
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="
-                flex items-center justify-center
-                w-11 h-11 md:w-12 md:h-12 shrink-0 rounded-xl
-                bg-slate-950/80 border border-white/10
-                shadow-lg cursor-pointer hover:bg-slate-900 transition-all duration-200
-                text-slate-350 hover:text-white
-                backdrop-blur-md z-[1000]
-              "
-              title={isSidebarOpen ? "Collapse Panel" : "Expand Panel"}
-              aria-label="Toggle Sidebar"
-            >
-              {isSidebarOpen ? <X size={18} /> : <Menu size={18} />}
-            </button>
-
-            {/* Logo container with glow */}
-            <div className="
-              hidden md:flex relative items-center justify-center
-              w-12 h-12 shrink-0 rounded-full overflow-hidden
-              shadow-[0_0_15px_rgba(14,165,233,0.4)]
-              bg-slate-900
+        <div className="flex h-screen w-screen overflow-hidden bg-slate-950">
+          <Sidebar 
+            filters={filters} 
+            setFilters={setFilters} 
+            isSharingLocation={isSharingLocation}
+            setIsSharingLocation={setIsSharingLocation}
+            userLocation={userLocation}
+            locationStatus={locationStatus}
+            locationError={locationError}
+            activeSOS={activeSOS}
+            handleSosClick={handleSosClick}
+            isOpen={isSidebarOpen}
+            setIsOpen={setIsSidebarOpen}
+            routeDestination={routeDestination}
+            setRouteDestination={setRouteDestination}
+            routesData={routesData}
+            setRoutesData={setRoutesData}
+            selectedRouteIndex={selectedRouteIndex}
+            setSelectedRouteIndex={setSelectedRouteIndex}
+            setShowAnonymousTipModal={setShowAnonymousTipModal}
+            setShowAuthModal={setShowAuthModal}
+            safeSpots={safeSpots}
+            mapRef={mapInstanceRef}
+            loadingSafeSpots={loadingSafeSpots}
+            currentUser={currentUser}
+            setCurrentUser={setCurrentUser}
+            showRoutePlanner={showRoutePlanner}
+            setShowRoutePlanner={setShowRoutePlanner}
+            fromLocation={fromLocation}
+            setFromLocation={setFromLocation}
+            transportMode={transportMode}
+            setTransportMode={setTransportMode}
+            language={language}
+            setLanguage={setLanguage}
+          />
+          
+          <div className="flex-1 h-full relative overflow-hidden">
+            <header className="
+              absolute top-4 left-20 md:left-4 right-4 md:right-auto z-[1000]
+              flex items-center gap-2 md:gap-3
             ">
-              <Globe3DDemo />
-            </div>
 
-            {/* Brand name & Tagline */}
-            <div className="hidden md:flex flex-col leading-none gap-1 mr-2 shrink-0">
-              <h1 className="
-                text-[1.5rem] font-black tracking-tight leading-none
-                bg-gradient-to-r from-slate-950 via-slate-800 to-cyan-700 bg-clip-text text-transparent
-                drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)]
+              <div className="
+                hidden md:flex relative items-center justify-center
+                w-12 h-12 shrink-0 rounded-full overflow-hidden
+                shadow-[0_0_15px_rgba(14,165,233,0.4)]
+                bg-slate-900
               ">
-                Jagriti
-              </h1>
-              <p className="hidden lg:block text-[0.55rem] font-extrabold text-slate-500 tracking-[0.12em] uppercase">
-                Know Your Surroundings. Stay Safe.
-              </p>
-            </div>
+                <Globe3DDemo />
+              </div>
 
-            {/* Divider */}
-            <div className="hidden md:block w-px h-6 bg-gray-300/30 mx-1" />
+              <div className="hidden md:flex flex-col leading-none gap-1 mr-2 shrink-0">
+                <h1 className="
+                  text-[1.5rem] font-black tracking-tight leading-none
+                  bg-gradient-to-r from-slate-950 via-slate-800 to-cyan-700 bg-clip-text text-transparent
+                  drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)]
+                ">
+                  {language === 'hi' ? 'जागृति' : 'Jagriti'}
+                </h1>
+                <p className="hidden lg:block text-[0.55rem] font-extrabold text-slate-500 tracking-[0.12em] uppercase">
+                  {language === 'hi' ? 'अपने आस-पास को जानें। सुरक्षित रहें।' : 'Know Your Surroundings. Stay Safe.'}
+                </p>
+              </div>
 
-            {/* Search Bar */}
-            <SearchBar mapRef={mapInstanceRef} />
+              <div className="hidden md:block w-px h-6 bg-gray-300/30 mx-1" />
 
-            {/* Auth Status Trigger / User Indicator */}
-            <div className="z-[1000] flex items-center gap-2 shrink-0">
-              {currentUser && currentUser.role === 'admin' && (
-                <button
-                  onClick={() => navigateTo('/admin')}
-                  className="
-                    flex items-center gap-1 px-3 py-2.5 text-xs font-extrabold rounded-xl
-                    bg-indigo-650 hover:bg-indigo-600 text-white shadow-lg cursor-pointer
-                    transition-all duration-200 border-none uppercase tracking-wider
-                  "
-                  title="Open Administration Console"
-                >
-                  Console
-                </button>
-              )}
-            </div>
-          </header>
+              <SearchBar mapRef={mapInstanceRef} />
 
-          {/* ── Body ───────────────────────────────────────────────────── */}
-          <div className="absolute inset-0">
-            <Sidebar 
-              filters={filters} 
-              setFilters={setFilters} 
-              isSharingLocation={isSharingLocation}
-              setIsSharingLocation={setIsSharingLocation}
-              userLocation={userLocation}
-              locationStatus={locationStatus}
-              locationError={locationError}
-              activeSOS={activeSOS}
-              handleSosClick={handleSosClick}
-              isOpen={isSidebarOpen}
-              setIsOpen={setIsSidebarOpen}
-              routeDestination={routeDestination}
-              setRouteDestination={setRouteDestination}
-              routesData={routesData}
-              setRoutesData={setRoutesData}
-              selectedRouteIndex={selectedRouteIndex}
-              setSelectedRouteIndex={setSelectedRouteIndex}
-              setShowAnonymousTipModal={setShowAnonymousTipModal}
-              setShowAuthModal={setShowAuthModal}
-              safeSpots={safeSpots}
-              mapRef={mapInstanceRef}
-              loadingSafeSpots={loadingSafeSpots}
-              currentUser={currentUser}
-              setCurrentUser={setCurrentUser}
-              showRoutePlanner={showRoutePlanner}
-              setShowRoutePlanner={setShowRoutePlanner}
-              fromLocation={fromLocation}
-              setFromLocation={setFromLocation}
-              transportMode={transportMode}
-              setTransportMode={setTransportMode}
-              language={language}
-              setLanguage={setLanguage}
-            />
+              <div className="z-[1000] flex items-center gap-2 shrink-0">
+                {currentUser && currentUser.role === 'admin' && (
+                  <button
+                    onClick={() => navigateTo('/admin')}
+                    className="
+                      flex items-center gap-1 px-3 py-2.5 text-xs font-extrabold rounded-xl
+                      bg-indigo-650 hover:bg-indigo-600 text-white shadow-lg cursor-pointer
+                      transition-all duration-200 border-none uppercase tracking-wider
+                    "
+                    title="Open Administration Console"
+                  >
+                    Console
+                  </button>
+                )}
+              </div>
+            </header>
+
             <MapView 
               filters={filters} 
               showNotification={showNotification} 
@@ -490,11 +530,11 @@ function App() {
               initialMode={authModalMode}
               onAuthSuccess={(user) => {
                 setCurrentUser(user);
-                showNotification(`Welcome back, ${user.name || user.username}!`);
+                showNotification(language === 'hi' ? `आपका स्वागत है, ${user.name || user.username}!` : `Welcome back, ${user.name || user.username}!`);
               }}
             />
           </div>
-        </>
+        </div>
       )}
     </div>
   )

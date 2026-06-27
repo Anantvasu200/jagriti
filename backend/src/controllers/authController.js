@@ -173,7 +173,8 @@ exports.signup = async (req, res) => {
         email: user.email,
         mobileNumber: user.mobileNumber,
         gender: user.gender,
-        role: user.role
+        role: user.role,
+        language: user.language
       }
     });
   } catch (err) {
@@ -212,11 +213,42 @@ exports.signin = async (req, res) => {
         email: user.email,
         mobileNumber: user.mobileNumber,
         gender: user.gender,
-        role: user.role
+        role: user.role,
+        language: user.language
       }
     });
   } catch (err) {
     console.error('Failed user signin:', err);
     return res.status(500).json({ status: 'error', message: 'Internal Server Error during signin.' });
+  }
+};
+
+exports.updateSettings = async (req, res) => {
+  const { language } = req.body;
+  if (!language) {
+    return res.status(400).json({ status: 'error', message: 'Language is required' });
+  }
+
+  try {
+    req.user.language = language;
+    await req.user.save();
+
+    return res.status(200).json({
+      status: 'success',
+      user: {
+        id: req.user.id,
+        username: req.user.username,
+        name: req.user.name,
+        surname: req.user.surname,
+        email: req.user.email,
+        mobileNumber: req.user.mobileNumber,
+        gender: req.user.gender,
+        role: req.user.role,
+        language: req.user.language
+      }
+    });
+  } catch (err) {
+    console.error('Failed to update user settings:', err);
+    return res.status(500).json({ status: 'error', message: 'Failed to update settings' });
   }
 };

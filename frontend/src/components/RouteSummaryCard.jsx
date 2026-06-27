@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { 
   ShieldAlert, ShieldCheck, MapPin, Compass, Wallet, Fuel, Zap, HeartPulse, Coffee, ArrowRight 
 } from 'lucide-react';
@@ -53,7 +54,18 @@ export default function RouteSummaryCard({
 }) {
   if (!route) return null;
 
-  const t = TRANSLATIONS[language];
+  const { t: i18nT } = useTranslation();
+  const t = new Proxy({}, {
+    get(target, prop) {
+      const categories = ['header', 'map', 'heatmap', 'filters', 'safetyScore', 'community', 'aiAssistant', 'sos', 'navigation'];
+      for (const cat of categories) {
+        const key = `${cat}.${prop}`;
+        const val = i18nT(key);
+        if (val !== key) return val;
+      }
+      return i18nT(prop);
+    }
+  });
 
   const safety = route.safetyScore;
   const hotspots = route.hotspotCount;

@@ -13,6 +13,7 @@ def get_db_connection():
             password=os.getenv("DB_PASSWORD", "yourpassword"),
             dbname=os.getenv("DB_NAME", "jagriti_db")
         )
+        conn.set_client_encoding('UTF8')
         return conn
     except Exception as e:
         print(f"Database connection error: {e}")

@@ -1,30 +1,132 @@
 import { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { API_BASE_URL } from '../utils/apiConfig';
 import {
   Map, Wallet, AlertCircle, Siren, Eye, Calendar, Search,
   ShieldAlert, Share2, Plus, Trash2, Phone, ChevronDown, ChevronUp,
-  User, Signal, MapPin, CheckCircle, Loader2
+  User, Signal, MapPin, CheckCircle, Loader2, X, Menu
 } from 'lucide-react';
+import Globe3DDemo from "./3d-globe-demo";
+
 
 const CRIME_TYPES = [
-  { value: 'all',        label: 'All Incidents', icon: Map,          accent: '#06b6d4' },
-  { value: 'theft',      label: 'Theft',         icon: Wallet,       accent: '#f97316' },
-  { value: 'harassment', label: 'Harassment',    icon: AlertCircle,  accent: '#f43f5e' },
-  { value: 'assault',    label: 'Assault',       icon: Siren,        accent: '#ef4444' },
-  { value: 'suspicious', label: 'Suspicious',    icon: Eye,          accent: '#eab308' },
+  { value: 'all',        label: 'All Incidents', labelHi: 'सभी घटनाएं', icon: Map,          accent: '#06b6d4' },
+  { value: 'theft',      label: 'Theft',         labelHi: 'चोरी',         icon: Wallet,       accent: '#f97316' },
+  { value: 'harassment', label: 'Harassment',    labelHi: 'उत्पीड़न',    icon: AlertCircle,  accent: '#f43f5e' },
+  { value: 'assault',    label: 'Assault',       labelHi: 'हमला',        icon: Siren,        accent: '#ef4444' },
+  { value: 'suspicious', label: 'Suspicious',    labelHi: 'संदिग्ध',      icon: Eye,          accent: '#eab308' },
 ]
 
-const LEGEND = [
-  { label: 'Theft',      color: '#f97316' },
-  { label: 'Harassment', color: '#f43f5e' },
-  { label: 'Assault',    color: '#ef4444' },
-  { label: 'Suspicious', color: '#eab308' },
-]
-
-
-
-
+// Language dictionary
+const t = {
+  en: {
+    terminal: 'Guard Terminal',
+    activeProtection: 'Jagriti Active Protection',
+    gpsLocked: 'GPS LOCKED',
+    gpsBlocked: 'GPS BLOCKED',
+    acquiring: 'ACQUIRING...',
+    anonymousSession: 'Anonymous Session',
+    signIn: 'Sign In',
+    signOut: 'Sign Out',
+    emergencySos: 'Emergency Assistance',
+    sosBroadcasting: 'SOS Alert Broadcasting',
+    triggerSos: 'TRIGGER EMERGENCY SOS',
+    safeCancel: '✓ I AM SAFE - CANCEL ALERT',
+    reportTip: 'Report Anonymous Tip',
+    liveLocation: 'Live Location Sharing',
+    trackingActive: 'Live Tracking Active',
+    startSharing: 'Start Sharing',
+    stopSharing: 'Stop Sharing',
+    routePlanner: 'Safe Route Planner',
+    destination: 'Destination',
+    destPlaceholder: 'Enter destination address...',
+    calculatingPaths: 'Calculating safest paths...',
+    clearRoute: 'Clear Route',
+    routeComparison: 'Route Comparison',
+    safestPath: 'Safest Path',
+    alternative: 'Alternative Route',
+    safeLevel: 'SAFE',
+    incidentFilters: 'Incident Filters',
+    category: 'Category',
+    dateFilter: 'Date Filter',
+    today: 'Today',
+    clear: 'Clear',
+    startDate: 'Start Date',
+    endDate: 'End Date',
+    dataSource: 'Data Source',
+    both: 'Both',
+    liveTips: 'Live Tips',
+    ncrb: 'NCRB',
+    timeOfDay: 'Time of Day',
+    hours24: '24 Hours',
+    day: 'Day',
+    night: 'Night',
+    safeInfra: 'Safe Infrastructure',
+    showNearby: 'Show Nearby Safe Spots Layer',
+    searchRadius: 'Search Radius',
+    nearestSafe: 'Nearest Safe Places',
+    searchingSpots: 'Searching nearby safe spots...',
+    noPlaces: '🚫 No safe places located within current radius. Click search to load places.',
+    enableGpsPrompt: '💡 Enable GPS location to calculate exact proximity distances to safe zones.',
+    closePanel: 'Close Panel',
+    searchThisArea: '🔍 Search This Area',
+    preferredLanguage: 'Preferred Language'
+  },
+  hi: {
+    terminal: 'सुरक्षा टर्मिनल',
+    activeProtection: 'जागृति सक्रिय सुरक्षा',
+    gpsLocked: 'जीपीएस लॉक',
+    gpsBlocked: 'जीपीएस अवरुद्ध',
+    acquiring: 'खोज रहा है...',
+    anonymousSession: 'अनाम सत्र',
+    signIn: 'साइन इन',
+    signOut: 'लॉगआउट',
+    emergencySos: 'आपातकालीन सहायता',
+    sosBroadcasting: 'एसओएस अलर्ट सक्रिय',
+    triggerSos: 'एसओएस आपातकाल सक्रिय करें',
+    safeCancel: '✓ मैं सुरक्षित हूँ - रद्द करें',
+    reportTip: 'अनाम सुरक्षा रिपोर्ट दर्ज करें',
+    liveLocation: 'लोकेशन शेयरिंग',
+    trackingActive: 'लाइव ट्रैकिंग सक्रिय',
+    startSharing: 'लोकेशन शेयर करें',
+    stopSharing: 'शेयर करना बंद करें',
+    routePlanner: 'सुरक्षित मार्ग योजनाकार',
+    destination: 'गंतव्य',
+    destPlaceholder: 'गंतव्य का पता दर्ज करें...',
+    calculatingPaths: 'सुरक्षित रास्तों की गणना की जा रही है...',
+    clearRoute: 'मार्ग साफ करें',
+    routeComparison: 'मार्ग तुलना',
+    safestPath: 'सबसे सुरक्षित रास्ता',
+    alternative: 'वैकल्पिक मार्ग',
+    safeLevel: 'सुरक्षित',
+    incidentFilters: 'घटना फिल्टर',
+    category: 'श्रेणी',
+    dateFilter: 'दिनांक फिल्टर',
+    today: 'आज',
+    clear: 'साफ करें',
+    startDate: 'प्रारंभ तिथि',
+    endDate: 'अंतिम तिथि',
+    dataSource: 'डेटा स्रोत',
+    both: 'दोनों',
+    liveTips: 'लाइव टिप्स',
+    ncrb: 'एनसीआरबी (NCRB)',
+    timeOfDay: 'दिन का समय',
+    hours24: '24 घंटे',
+    day: 'दिन',
+    night: 'रात',
+    safeInfra: 'सुरक्षित बुनियादी ढांचा',
+    showNearby: 'आस-पास के सुरक्षित स्थल दिखाएं',
+    searchRadius: 'खोज त्रिज्या',
+    nearestSafe: 'निकटतम सुरक्षित स्थान',
+    searchingSpots: 'सुरक्षित स्थानों की खोज की जा रही है...',
+    noPlaces: '🚫 वर्तमान त्रिज्या में कोई सुरक्षित स्थान नहीं मिला। खोजने के लिए क्लिक करें।',
+    enableGpsPrompt: '💡 सुरक्षित क्षेत्रों के सटीक दूरी की गणना के लिए जीपीएस ऑन करें।',
+    closePanel: 'पैनल बंद करें',
+    searchThisArea: '🔍 इस क्षेत्र में खोजें',
+    preferredLanguage: 'भाषा का चयन'
+  }
+};
 
 export default function Sidebar({ 
   filters, 
@@ -50,10 +152,16 @@ export default function Sidebar({
   mapRef,
   loadingSafeSpots,
   currentUser,
-  setCurrentUser
+  setCurrentUser,
+  language = 'en',
+  setLanguage
 }) {
   const [localStartDate, setLocalStartDate] = useState(filters.startDate || '');
   const [localEndDate, setLocalEndDate] = useState(filters.endDate || '');
+
+  // Debounce Safe Spots Radius changes
+  const [localRadius, setLocalRadius] = useState(filters.safeSpotsRadius || 1000);
+  const radiusDebounceRef = useRef(null);
 
   // Route Geocoding state
   const [routeQuery, setRouteQuery] = useState('')
@@ -61,6 +169,24 @@ export default function Sidebar({
   const [routeSearchLoading, setRouteSearchLoading] = useState(false)
 
   const routeDebounceRef = useRef(null)
+
+  const { t: i18nT } = useTranslation();
+  const selectT = new Proxy({}, {
+    get(target, prop) {
+      const categories = ['header', 'map', 'heatmap', 'filters', 'safetyScore', 'community', 'aiAssistant', 'sos', 'navigation'];
+      for (const cat of categories) {
+        const key = `${cat}.${prop}`;
+        const val = i18nT(key);
+        if (val !== key) return val;
+      }
+      return i18nT(prop);
+    }
+  });
+
+  // Sync radius back from filters if updated externally
+  useEffect(() => {
+    setLocalRadius(filters.safeSpotsRadius || 1000);
+  }, [filters.safeSpotsRadius]);
 
   const searchRouteDestination = async (q) => {
     if (q.trim().length < 2) { setRouteSearchResults([]); return }
@@ -152,8 +278,8 @@ export default function Sidebar({
             <Signal size={16} />
           </div>
           <div>
-            <span className="font-extrabold text-[0.8rem] uppercase tracking-wider text-slate-800 block">Guard Terminal</span>
-            <span className="text-[0.65rem] text-slate-500">Jagriti Active Protection</span>
+            <span className="font-extrabold text-[0.8rem] uppercase tracking-wider text-slate-800 block">{selectT.terminal}</span>
+            <span className="text-[0.65rem] text-slate-500">{selectT.activeProtection}</span>
           </div>
         </div>
 
@@ -161,75 +287,100 @@ export default function Sidebar({
         {locationStatus === 'granted' && userLocation ? (
           <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full text-emerald-600 text-[0.65rem] font-semibold">
             <MapPin size={10} />
-            <span>GPS LOCKED</span>
+            <span>{selectT.gpsLocked}</span>
           </div>
         ) : locationStatus === 'denied' ? (
           <div className="flex items-center gap-1.5 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full text-red-600 text-[0.65rem] font-semibold">
             <MapPin size={10} />
-            <span>GPS BLOCKED</span>
+            <span>{selectT.gpsBlocked}</span>
           </div>
         ) : (
           <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full text-amber-600 text-[0.65rem] font-semibold animate-pulse">
             <MapPin size={10} />
-            <span>ACQUIRING...</span>
+            <span>{selectT.acquiring}</span>
           </div>
         )}
       </div>
 
-      {/* 1.5. User Profile / Account Section */}
-      <div className="px-4 py-3 border-b border-slate-150 bg-slate-50/50 flex items-center justify-between">
-        {currentUser ? (
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-2.5 min-w-0">
-              {/* User Avatar Circle */}
-              <div className="w-9 h-9 rounded-full bg-cyan-100 border border-cyan-200 flex items-center justify-center text-cyan-700 font-extrabold text-sm shrink-0 uppercase">
-                {currentUser.name ? currentUser.name[0] : currentUser.username[0]}
+      {/* 1.5. User Profile / Account Section & Bilingual selector */}
+      <div className="px-4 py-3 border-b border-slate-150 bg-slate-50/50 flex flex-col gap-2.5">
+        <div className="flex items-center justify-between w-full">
+          {currentUser ? (
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-9 h-9 rounded-full bg-cyan-100 border border-cyan-200 flex items-center justify-center text-cyan-700 font-extrabold text-sm shrink-0 uppercase">
+                  {currentUser.name ? currentUser.name[0] : currentUser.username[0]}
+                </div>
+                <div className="min-w-0">
+                  <span className="block text-[0.72rem] font-extrabold text-slate-800 leading-snug truncate">
+                    {currentUser.name} {currentUser.surname || ''}
+                  </span>
+                  <span className="block text-[0.55rem] text-slate-500 font-bold truncate">
+                    @{currentUser.username} {currentUser.role === 'admin' && '• Admin'}
+                  </span>
+                </div>
               </div>
-              <div className="min-w-0">
-                <span className="block text-[0.72rem] font-extrabold text-slate-800 leading-snug truncate">
-                  {currentUser.name} {currentUser.surname || ''}
-                </span>
-                <span className="block text-[0.55rem] text-slate-500 font-bold truncate">
-                  @{currentUser.username} {currentUser.role === 'admin' && '• Admin'}
-                </span>
-              </div>
+              
+              <button
+                onClick={() => {
+                  if (window.confirm(language === 'hi' ? `क्या आप जागृति नेटवर्क से साइन आउट करना चाहते हैं?` : `Sign out from Jagriti Safety Network?`)) {
+                    localStorage.removeItem('jagriti_token');
+                    localStorage.removeItem('jagriti_user');
+                    setCurrentUser(null);
+                  }
+                }}
+                className="text-[0.62rem] font-extrabold text-red-700 hover:text-white bg-red-50 hover:bg-red-600 px-2.5 py-1.5 rounded-lg border border-red-200 hover:border-red-600 transition-all duration-150 cursor-pointer shrink-0 uppercase tracking-wider shadow-sm"
+              >
+                {selectT.signOut}
+              </button>
             </div>
-            
+          ) : (
+            <div className="flex items-center justify-between w-full py-0.5">
+              <div className="flex items-center gap-2 text-slate-500">
+                <User size={16} />
+                <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-slate-655">{selectT.anonymousSession}</span>
+              </div>
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="text-[0.62rem] font-extrabold text-white bg-slate-900 hover:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-950 transition-colors cursor-pointer shrink-0 uppercase tracking-wider shadow-sm"
+              >
+                {selectT.signIn}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Bilingual Language Selector */}
+        <div className="flex items-center justify-between border-t border-slate-200/50 pt-2.5 mt-0.5">
+          <span className="text-[0.62rem] font-extrabold uppercase tracking-wider text-slate-500">
+            {selectT.preferredLanguage}
+          </span>
+          <div className="flex bg-white p-0.5 rounded-lg gap-0.5 border border-slate-200 shadow-sm shrink-0">
             <button
-              onClick={() => {
-                if (window.confirm(`Sign out ${currentUser.name || currentUser.username} from Jagriti Safety Network?`)) {
-                  localStorage.removeItem('jagriti_token');
-                  localStorage.removeItem('jagriti_user');
-                  setCurrentUser(null);
-                }
-              }}
-              className="text-[0.62rem] font-extrabold text-red-700 hover:text-white bg-red-50 hover:bg-red-600 px-2.5 py-1.5 rounded-lg border border-red-200 hover:border-red-600 transition-all duration-150 cursor-pointer shrink-0 uppercase tracking-wider shadow-sm"
-              title="Sign Out"
+              onClick={() => setLanguage('en')}
+              className={`px-2.5 py-1 rounded-md text-[0.65rem] font-extrabold transition-all cursor-pointer border-none
+                ${language === 'en' ? 'bg-cyan-600 text-white shadow-sm' : 'bg-transparent text-slate-500 hover:text-slate-800'}
+              `}
             >
-              Sign Out
+              English
+            </button>
+            <button
+              onClick={() => setLanguage('hi')}
+              className={`px-2.5 py-1 rounded-md text-[0.65rem] font-extrabold transition-all cursor-pointer border-none
+                ${language === 'hi' ? 'bg-cyan-600 text-white shadow-sm' : 'bg-transparent text-slate-500 hover:text-slate-800'}
+              `}
+            >
+              हिन्दी
             </button>
           </div>
-        ) : (
-          <div className="flex items-center justify-between w-full py-0.5">
-            <div className="flex items-center gap-2 text-slate-500">
-              <User size={16} />
-              <span className="text-[0.68rem] font-extrabold uppercase tracking-wider text-slate-650">Anonymous Session</span>
-            </div>
-            <button
-              onClick={() => setShowAuthModal(true)}
-              className="text-[0.62rem] font-extrabold text-white bg-slate-900 hover:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-950 transition-colors cursor-pointer shrink-0 uppercase tracking-wider shadow-sm"
-            >
-              Sign In
-            </button>
-          </div>
-        )}
+        </div>
       </div>
 
       {/* 2. Scrollable Body containing actions and filters */}
       <nav className="flex-1 p-4 overflow-y-auto space-y-4 pt-4 custom-scrollbar">
         
         {/* --- Card 1: SOS Panic Trigger --- */}
-        <div className={`p-4 rounded-2xl border transition-all duration-300 ${
+        <div id="section-sos" className={`p-4 rounded-2xl border transition-all duration-300 ${
           activeSOS 
             ? 'bg-emerald-50 border-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.1)]' 
             : 'bg-red-50/50 border-red-200 shadow-[0_0_20px_rgba(239,68,68,0.02)] hover:bg-red-50'
@@ -238,7 +389,7 @@ export default function Sidebar({
             <div className="flex items-center gap-2">
               <ShieldAlert className={activeSOS ? "text-emerald-600" : "text-red-600"} size={18} />
               <span className={`text-xs font-bold uppercase tracking-wider ${activeSOS ? 'text-emerald-700' : 'text-red-700'}`}>
-                {activeSOS ? 'SOS Alert Broadcasting' : 'Emergency Assistance'}
+                {activeSOS ? selectT.sosBroadcasting : selectT.emergencySos}
               </span>
             </div>
             {activeSOS && (
@@ -253,7 +404,7 @@ export default function Sidebar({
                 : 'bg-red-600 hover:bg-red-500 text-white'
             }`}
           >
-            {activeSOS ? '✓ I AM SAFE - CANCEL ALERT' : 'TRIGGER EMERGENCY SOS'}
+            {activeSOS ? selectT.safeCancel : selectT.triggerSos}
           </button>
           
           <button
@@ -267,12 +418,12 @@ export default function Sidebar({
             }}
             className="w-full mt-2 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
           >
-            Report Anonymous Tip
+            {selectT.reportTip}
           </button>
         </div>
 
         {/* --- Card 2: Live Location Sharing --- */}
-        <div className={`p-4 rounded-2xl border transition-all duration-300 ${
+        <div id="section-sharing" className={`p-4 rounded-2xl border transition-all duration-300 ${
           isSharingLocation 
             ? 'bg-cyan-50 border-cyan-200 shadow-[0_0_20px_rgba(6,182,212,0.1)]' 
             : 'bg-slate-50 border-slate-200 hover:bg-slate-100/50'
@@ -281,14 +432,13 @@ export default function Sidebar({
             <div className="flex items-center gap-2">
               <Share2 className={isSharingLocation ? "text-cyan-600" : "text-slate-500"} size={18} />
               <span className={`text-xs font-bold uppercase tracking-wider ${isSharingLocation ? 'text-cyan-700' : 'text-slate-700'}`}>
-                {isSharingLocation ? 'Live Tracking Active' : 'Live Location Sharing'}
+                {isSharingLocation ? selectT.trackingActive : selectT.liveLocation}
               </span>
             </div>
             {isSharingLocation && (
               <span className="w-2.5 h-2.5 rounded-full bg-cyan-500 animate-pulse" />
             )}
           </div>
-
 
           <div className="flex gap-2">
             <button
@@ -299,7 +449,7 @@ export default function Sidebar({
                   : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm'
               }`}
             >
-              {isSharingLocation ? 'Stop Sharing' : 'Start Sharing'}
+              {isSharingLocation ? selectT.stopSharing : selectT.startSharing}
             </button>
             
             {isSharingLocation && (
@@ -315,10 +465,10 @@ export default function Sidebar({
         </div>
 
         {/* --- Card 4: Safe Route Planner (Flat, non-collapsible) --- */}
-        <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-          <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-3">Safe Route Planner</span>
+        <div id="section-route" className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+          <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-3">{selectT.routePlanner}</span>
           <div className="space-y-3">
-            <span className="text-[0.65rem] font-bold text-slate-500 uppercase tracking-wider block mb-1">Destination</span>
+            <span className="text-[0.65rem] font-bold text-slate-500 uppercase tracking-wider block mb-1">{selectT.destination}</span>
             <div className="relative">
               <input
                 type="text"
@@ -328,7 +478,7 @@ export default function Sidebar({
                   clearTimeout(routeDebounceRef.current);
                   routeDebounceRef.current = setTimeout(() => searchRouteDestination(e.target.value), 350);
                 }}
-                placeholder="Enter destination address..."
+                placeholder={selectT.destPlaceholder}
                 className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-cyan-500/50"
               />
               {routeSearchLoading && (
@@ -337,7 +487,7 @@ export default function Sidebar({
                 </div>
               )}
 
-              {/* Autocomplete Dropdown - Absolute inside the relative container to overlay and prevent glitches */}
+              {/* Autocomplete Dropdown */}
               {routeSearchResults.length > 0 && (
                 <div className="absolute left-0 right-0 z-50 bg-white border border-slate-250 rounded-xl overflow-hidden divide-y divide-slate-100 mt-1 max-h-[160px] overflow-y-auto shadow-lg">
                   {routeSearchResults.map((r, i) => (
@@ -363,7 +513,7 @@ export default function Sidebar({
             {routeDestination && (
               <div className="bg-white border border-slate-200 rounded-xl p-3 space-y-2 mt-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[0.65rem] text-slate-500 font-bold">ROUTE COMPARISON</span>
+                  <span className="text-[0.65rem] text-slate-500 font-bold">{selectT.routeComparison}</span>
                   <button
                     onClick={() => {
                       setRouteDestination(null);
@@ -372,14 +522,14 @@ export default function Sidebar({
                     }}
                     className="text-[0.65rem] font-bold text-red-600 hover:text-red-500 transition-colors uppercase cursor-pointer border-none bg-transparent"
                   >
-                    Clear Route
+                    {selectT.clearRoute}
                   </button>
                 </div>
 
                 {routesData.length === 0 ? (
                   <div className="text-[0.7rem] text-slate-500 py-1 flex items-center gap-2">
                     <span className="w-2.5 h-2.5 border-2 border-slate-500 border-t-transparent rounded-full animate-spin"></span>
-                    Calculating safest paths...
+                    {selectT.calculatingPaths}
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -402,10 +552,10 @@ export default function Sidebar({
                         >
                           <div className="flex justify-between items-center mb-1">
                             <span className={`text-[0.7rem] font-bold ${isSelected ? 'text-slate-900' : 'text-slate-700'}`}>
-                              {idx === 0 ? 'Safest Path' : `Alternative Route ${idx}`}
+                              {idx === 0 ? selectT.safestPath : `${selectT.alternative} ${idx}`}
                             </span>
                             <span className={`text-[0.65rem] font-extrabold px-1.5 py-0.5 rounded-full border ${safetyBg} ${safetyColor} ${safetyBorder}`}>
-                              {safety}% SAFE
+                              {safety}% {selectT.safeLevel}
                             </span>
                           </div>
                           <div className="flex justify-between text-[0.65rem] text-slate-500 font-semibold">
@@ -423,13 +573,13 @@ export default function Sidebar({
         </div>
 
         {/* --- Card 5: Incident Visualization Filters (Flat, non-collapsible) --- */}
-        <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-4">
-          <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">Incident Filters</span>
+        <div id="section-filters" className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-4">
+          <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">{selectT.incidentFilters}</span>
           
           <div>
-            <span className="text-[0.65rem] font-bold text-slate-500 uppercase tracking-wider block mb-2">Category</span>
+            <span className="text-[0.65rem] font-bold text-slate-500 uppercase tracking-wider block mb-2">{selectT.category}</span>
             <ul className="flex flex-col gap-1 list-none p-0">
-              {CRIME_TYPES.map(({ value, label, icon: Icon, accent }) => {
+              {CRIME_TYPES.map(({ value, label, labelHi, icon: Icon, accent }) => {
                 const isActive = filters.crimeType === value;
                 return (
                   <li key={value}>
@@ -440,7 +590,7 @@ export default function Sidebar({
                       `}
                     >
                       <Icon className="h-4 w-4 shrink-0" style={{ color: isActive ? accent : '#64748b' }} />
-                      <span>{label}</span>
+                      <span>{language === 'hi' ? labelHi : label}</span>
                       <span className={`ml-auto w-1.5 h-1.5 rounded-full shrink-0 transition-opacity duration-200 ${isActive ? 'opacity-100' : 'opacity-0'}`} style={{ background: accent }} />
                     </button>
                   </li>
@@ -451,20 +601,20 @@ export default function Sidebar({
 
           <div className="border-t border-slate-200 pt-3 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[0.65rem] font-bold text-slate-500 uppercase tracking-wider">Date Filter</span>
+              <span className="text-[0.65rem] font-bold text-slate-500 uppercase tracking-wider">{selectT.dateFilter}</span>
               <div className="flex gap-1.5">
                 <button
                   onClick={setTodayFilter}
                   className="text-[0.62rem] font-extrabold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 px-2 py-0.5 rounded-lg transition-colors cursor-pointer uppercase tracking-wider"
                 >
-                  Today
+                  {selectT.today}
                 </button>
                 {(localStartDate || localEndDate) && (
                   <button
                     onClick={clearDateFilter}
                     className="text-[0.62rem] font-extrabold text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 px-2 py-0.5 rounded-lg transition-colors cursor-pointer uppercase tracking-wider"
                   >
-                    Clear
+                    {selectT.clear}
                   </button>
                 )}
               </div>
@@ -472,7 +622,7 @@ export default function Sidebar({
             
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <span className="text-[0.55rem] text-slate-500 font-bold uppercase tracking-wider block mb-1">Start Date</span>
+                <span className="text-[0.55rem] text-slate-500 font-bold uppercase tracking-wider block mb-1">{selectT.startDate}</span>
                 <input
                   type="date"
                   value={localStartDate}
@@ -485,7 +635,7 @@ export default function Sidebar({
                 />
               </div>
               <div>
-                <span className="text-[0.55rem] text-slate-500 font-bold uppercase tracking-wider block mb-1">End Date</span>
+                <span className="text-[0.55rem] text-slate-500 font-bold uppercase tracking-wider block mb-1">{selectT.endDate}</span>
                 <input
                   type="date"
                   value={localEndDate}
@@ -501,7 +651,7 @@ export default function Sidebar({
           </div>
 
           <div className="border-t border-slate-200 pt-3">
-            <span className="text-[0.65rem] font-bold text-slate-500 uppercase tracking-wider block mb-2">Data Source</span>
+            <span className="text-[0.65rem] font-bold text-slate-500 uppercase tracking-wider block mb-2">{selectT.dataSource}</span>
             <div className="flex bg-white p-1 rounded-xl gap-1 border border-slate-200">
               <button
                 onClick={() => setFilters(f => ({ ...f, dataSource: 'both' }))}
@@ -509,7 +659,7 @@ export default function Sidebar({
                   ${filters.dataSource === 'both' ? 'bg-slate-100 text-slate-800 shadow-sm border border-slate-200' : 'bg-transparent text-slate-500 hover:text-slate-700'}
                 `}
               >
-                Both
+                {selectT.both}
               </button>
               <button
                 onClick={() => setFilters(f => ({ ...f, dataSource: 'live' }))}
@@ -517,7 +667,7 @@ export default function Sidebar({
                   ${filters.dataSource === 'live' ? 'bg-slate-100 text-slate-800 shadow-sm border border-slate-200' : 'bg-transparent text-slate-500 hover:text-slate-700'}
                 `}
               >
-                Live Tips
+                {selectT.liveTips}
               </button>
               <button
                 onClick={() => setFilters(f => ({ ...f, dataSource: 'ncrb' }))}
@@ -525,13 +675,13 @@ export default function Sidebar({
                   ${filters.dataSource === 'ncrb' ? 'bg-slate-100 text-slate-800 shadow-sm border border-slate-200' : 'bg-transparent text-slate-500 hover:text-slate-700'}
                 `}
               >
-                NCRB
+                {selectT.ncrb}
               </button>
             </div>
           </div>
 
           <div className="border-t border-slate-200 pt-3">
-            <span className="text-[0.65rem] font-bold text-slate-500 uppercase tracking-wider block mb-2">Time of Day</span>
+            <span className="text-[0.65rem] font-bold text-slate-500 uppercase tracking-wider block mb-2">{selectT.timeOfDay}</span>
             <div className="flex bg-white p-1 rounded-xl gap-1 border border-slate-200">
               {['all', 'day', 'night'].map((time) => (
                 <button
@@ -541,33 +691,33 @@ export default function Sidebar({
                     ${filters.timeOfDay === time ? 'bg-slate-100 text-slate-800 shadow-sm border border-slate-200' : 'bg-transparent text-slate-500 hover:text-slate-700'}
                   `}
                 >
-                  {time === 'all' ? '24 Hours' : time === 'day' ? 'Day' : 'Night'}
+                  {time === 'all' ? selectT.hours24 : time === 'day' ? selectT.day : selectT.night}
                 </button>
               ))}
             </div>
           </div>
 
           <div className="border-t border-slate-200 pt-3">
-            <span className="text-[0.65rem] font-bold text-slate-500 uppercase tracking-wider block mb-2">Safe Infrastructure</span>
+            <span className="text-[0.65rem] font-bold text-slate-500 uppercase tracking-wider block mb-2">{selectT.safeInfra}</span>
             <label className="flex items-center gap-2 px-1 py-1 cursor-pointer hover:text-slate-800 text-slate-700 transition-colors">
               <input 
                 type="checkbox"
                 checked={filters.showSafeSpots || false}
-                onChange={(e) => setFilters(f => ({ ...f, showSafeSpots: e.target.checked }))}
-                className="rounded border-slate-350 bg-white text-emerald-600 focus:ring-emerald-500/50"
+                onChange={(e) => setFilters(f => ({ ...f, showSafeSpots: e.target.checked, safeSpotsSearchTrigger: (f.safeSpotsSearchTrigger || 0) + 1 }))}
+                className="rounded border-slate-350 bg-white text-emerald-650 focus:ring-emerald-500/50"
               />
-              <span className="text-xs font-bold text-emerald-600">Show Nearby Safe Spots Layer</span>
+              <span className="text-xs font-bold text-emerald-600">{selectT.showNearby}</span>
             </label>
 
             {filters.showSafeSpots && (
               <div className="mt-3 flex flex-col gap-3">
                 <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm">
                   <div className="flex justify-between items-center mb-1">
-                    <span className="text-[0.65rem] font-bold text-slate-500 uppercase tracking-wider">Search Radius</span>
+                    <span className="text-[0.65rem] font-bold text-slate-500 uppercase tracking-wider">{selectT.searchRadius}</span>
                     <span className="text-[0.7rem] font-extrabold text-emerald-600">
-                      {filters.safeSpotsRadius >= 1000 
-                        ? `${(filters.safeSpotsRadius / 1000).toFixed(1)} km` 
-                        : `${filters.safeSpotsRadius}m`}
+                      {localRadius >= 1000 
+                        ? `${(localRadius / 1000).toFixed(1)} km` 
+                        : `${localRadius}m`}
                     </span>
                   </div>
                   <input
@@ -575,8 +725,19 @@ export default function Sidebar({
                     min="500"
                     max="2500"
                     step="500"
-                    value={filters.safeSpotsRadius ?? 1000}
-                    onChange={(e) => setFilters(f => ({ ...f, safeSpotsRadius: parseInt(e.target.value) }))}
+                    value={localRadius}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value);
+                      setLocalRadius(val);
+                      clearTimeout(radiusDebounceRef.current);
+                      radiusDebounceRef.current = setTimeout(() => {
+                        setFilters(f => ({ 
+                          ...f, 
+                          safeSpotsRadius: val,
+                          safeSpotsSearchTrigger: (f.safeSpotsSearchTrigger || 0) + 1 
+                        }));
+                      }, 500);
+                    }}
                     className="w-full h-1 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-emerald-600"
                   />
                   <div className="flex justify-between text-[0.55rem] text-slate-400 font-bold mt-1">
@@ -588,13 +749,21 @@ export default function Sidebar({
 
                 {/* Nearby Places Proximity List */}
                 <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col">
-                  <span className="text-[0.65rem] font-extrabold text-slate-500 uppercase tracking-wider mb-2">Nearest Safe places</span>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-[0.65rem] font-extrabold text-slate-500 uppercase tracking-wider">{selectT.nearestSafe}</span>
+                    <button 
+                      onClick={() => setFilters(f => ({ ...f, safeSpotsSearchTrigger: (f.safeSpotsSearchTrigger || 0) + 1 }))}
+                      className="text-[0.6rem] font-bold text-emerald-650 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-1 rounded cursor-pointer transition-colors"
+                    >
+                      {selectT.searchThisArea}
+                    </button>
+                  </div>
                   
                   {loadingSafeSpots ? (
                     <div className="flex flex-col gap-2 py-1">
                       <div className="flex items-center gap-2 text-emerald-600 font-extrabold text-[0.6rem] uppercase tracking-wider animate-pulse mb-1">
                         <Loader2 className="animate-spin text-emerald-500" size={12} />
-                        <span>Searching nearby safe spots...</span>
+                        <span>{selectT.searchingSpots}</span>
                       </div>
                       {[1, 2, 3].map(i => (
                         <div key={i} className="w-full flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-100 animate-pulse">
@@ -611,7 +780,7 @@ export default function Sidebar({
                     </div>
                   ) : !userLocation ? (
                     <p className="text-[0.6rem] text-slate-450 leading-relaxed font-bold">
-                      💡 Enable GPS location to calculate exact proximity distances to safe zones.
+                      {selectT.enableGpsPrompt}
                     </p>
                   ) : safeSpots && safeSpots.length > 0 ? (
                     <div className="flex flex-col gap-2 max-h-[180px] overflow-y-auto pr-0.5">
@@ -626,11 +795,25 @@ export default function Sidebar({
                             : `${spot.distanceKm.toFixed(2)} km`;
                           
                           const spotEmojis = {
-                            police: '🚓',
+                            police: '🚨',
                             hospital: '🏥',
                             pharmacy: '💊',
-                            metro: '🚇'
+                            metro: '🚇',
+                            fuel: '⛽',
+                            ev_charging: '⚡'
                           };
+
+                          const getSpotTypeLabel = (type) => {
+                            switch(type) {
+                              case 'police': return language === 'hi' ? 'पुलिस स्टेशन/चौकी' : 'Police Station/Chowki';
+                              case 'hospital': return language === 'hi' ? 'अस्पताल/क्लिनिक' : 'Hospital/Clinic';
+                              case 'pharmacy': return language === 'hi' ? 'दवा की दुकान' : 'Chemist Shop';
+                              case 'metro': return language === 'hi' ? 'मेट्रो स्टेशन' : 'Metro Station';
+                              case 'fuel': return language === 'hi' ? 'पेट्रोल/सीएनजी पंप' : 'Petrol/CNG Pump';
+                              case 'ev_charging': return language === 'hi' ? 'ईवी चार्जिंग स्टेशन' : 'EV Charging Station';
+                              default: return language === 'hi' ? 'सुरक्षित स्थान' : 'Safe Spot';
+                            }
+                          }
 
                           return (
                             <button
@@ -651,7 +834,7 @@ export default function Sidebar({
                                     {spot.name}
                                   </div>
                                   <div className="text-[0.55rem] text-slate-400 font-bold truncate capitalize leading-none mt-0.5">
-                                    {spot.type}
+                                    {getSpotTypeLabel(spot.type)}
                                   </div>
                                 </div>
                               </div>
@@ -664,7 +847,7 @@ export default function Sidebar({
                     </div>
                   ) : (
                     <p className="text-[0.6rem] text-slate-450 leading-relaxed font-bold">
-                      🚫 No safe places located within current radius. Zoom/pan map to load places.
+                      {selectT.noPlaces}
                     </p>
                   )}
                 </div>
@@ -672,29 +855,6 @@ export default function Sidebar({
             )}
           </div>
 
-          <div className="border-t border-slate-200 pt-3 flex flex-col gap-2">
-            <button
-              onClick={() => window.open(`${API_BASE_URL}/api/reports/safety`, '_blank')}
-              className="w-full py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition-all duration-150 cursor-pointer flex items-center justify-center gap-1.5 shadow-sm border-none"
-            >
-              Export Safety PDF Report
-            </button>
-          </div>
-        </div>
-
-        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-          <span className="text-[0.6rem] font-bold uppercase tracking-wider text-slate-500 block mb-2">Category Colors</span>
-          <div className="grid grid-cols-2 gap-2">
-            {LEGEND.map(({ label, color }) => (
-              <div key={label} className="flex items-center gap-1.5">
-                <span
-                  className="shrink-0 w-2 h-2 rounded-full"
-                  style={{ background: color, boxShadow: `0 0 4px ${color}66` }}
-                />
-                <span className="text-[0.68rem] text-slate-600 font-semibold">{label}</span>
-              </div>
-            ))}
-          </div>
         </div>
 
       </nav>
@@ -704,7 +864,7 @@ export default function Sidebar({
           onClick={toggleSidebar}
           className="w-full font-bold text-xs py-2 text-center bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl transition-colors cursor-pointer shadow-sm"
         >
-          Close Panel
+          {selectT.closePanel}
         </button>
       </div>
     </div>
@@ -726,50 +886,137 @@ export default function Sidebar({
         )}
       </AnimatePresence>
 
-      {/* Mobile Menu Slide */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ x: "-100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "-100%" }}
-            transition={{ duration: 0.3 }}
-            className="md:hidden fixed inset-y-0 left-0 w-80 z-50 pointer-events-auto p-4 flex flex-col justify-end"
-          >
-            <div className="h-[90%] w-full">
-              {renderSidebarContent()}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Desktop Sidebar container */}
-      <AnimatePresence initial={false}>
-        {isOpen && (
-          <motion.div 
-            initial={{ x: -300, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -300, opacity: 0 }}
-            transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-            className="hidden md:block fixed top-[110px] left-4 bottom-4 w-80 z-50 pointer-events-auto"
-          >
-            <div className="h-full relative">
-              {renderSidebarContent()}
-              
-              {/* Collapsing Pull-tab */}
-              <button
-                onClick={toggleSidebar}
-                title="Collapse Panel"
-                className="absolute -right-5 top-1/2 -translate-y-1/2 w-5 h-16 bg-white border border-slate-200 border-l-0 rounded-r-xl shadow-md flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-slate-50 hover:w-6 hover:-right-6 transition-all duration-200 group z-[-1]"
+      {/* Collapsible Sidebar (w-80 or w-[72px]) - Responsive Absolute Overlay on Mobile and Relative Sidebar on Desktop */}
+      <motion.div 
+        animate={{ width: isOpen ? 320 : 72 }}
+        transition={{ type: "spring", bounce: 0.1, duration: 0.35 }}
+        className="flex flex-col md:relative absolute inset-y-0 left-0 h-full bg-white border-r border-slate-200 shadow-md shrink-0 pointer-events-auto select-none z-[1002]"
+      >
+        {isOpen ? (
+          <div className="flex flex-col h-full w-[320px] overflow-hidden">
+            {renderSidebarContent()}
+            
+            {/* Collapse Pull-tab on the right edge */}
+            <button
+              onClick={() => setIsOpen(false)}
+              title={language === 'hi' ? "पैनल सिकोड़ें" : "Collapse Panel"}
+              className="absolute -right-3 top-1/2 -translate-y-1/2 w-3 h-16 bg-white border border-slate-200 border-l-0 rounded-r-xl shadow-md flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-slate-50 hover:w-4 hover:-right-4 transition-all duration-200 group z-[1001]"
+            >
+              <div className="w-[2px] h-[3px] rounded-full bg-slate-400" />
+              <div className="w-[2px] h-[3px] rounded-full bg-slate-400" />
+              <div className="w-[2px] h-[3px] rounded-full bg-slate-400" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col h-full w-[72px] items-center py-4 justify-between overflow-hidden bg-slate-50 relative">
+            {/* Top Logo */}
+            <div className="flex flex-col items-center gap-4">
+              <div 
+                onClick={() => setIsOpen(true)}
+                className="w-10 h-10 rounded-full overflow-hidden shadow-md bg-slate-900 flex items-center justify-center border border-slate-200 cursor-pointer hover:scale-105 transition-transform"
+                title={language === 'hi' ? "पैनल फैलाएं" : "Expand Panel"}
               >
-                <div className="w-[3px] h-[3px] rounded-full bg-slate-300 group-hover:bg-cyan-505 transition-colors" />
-                <div className="w-[3px] h-[3px] rounded-full bg-slate-300 group-hover:bg-cyan-550 transition-colors" />
-                <div className="w-[3px] h-[3px] rounded-full bg-slate-300 group-hover:bg-cyan-550 transition-colors" />
+                <Globe3DDemo />
+              </div>
+            </div>
+
+            {/* Vertical list of navigation icons */}
+            <div className="flex flex-col gap-4 my-auto">
+              {/* SOS Icon */}
+              <button
+                onClick={() => {
+                  setIsOpen(true);
+                  setTimeout(() => document.getElementById('section-sos')?.scrollIntoView({ behavior: 'smooth' }), 100);
+                }}
+                title={language === 'hi' ? "एसओएस आपातकाल" : "Emergency SOS"}
+                className={`w-11 h-11 rounded-xl flex items-center justify-center cursor-pointer transition-all border shadow-sm ${
+                  activeSOS 
+                    ? 'bg-red-650 hover:bg-red-600 text-white border-red-500 animate-pulse' 
+                    : 'bg-red-50 hover:bg-red-100 text-red-600 border-red-200'
+                }`}
+              >
+                <ShieldAlert size={20} />
+              </button>
+
+              {/* Location Sharing Icon */}
+              <button
+                onClick={() => {
+                  setIsOpen(true);
+                  setTimeout(() => document.getElementById('section-sharing')?.scrollIntoView({ behavior: 'smooth' }), 100);
+                }}
+                title={language === 'hi' ? "लोकेशन शेयरिंग" : "Live Location Sharing"}
+                className={`w-11 h-11 rounded-xl flex items-center justify-center cursor-pointer transition-all border shadow-sm ${
+                  isSharingLocation
+                    ? 'bg-cyan-600 hover:bg-cyan-500 text-white border-cyan-500'
+                    : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200'
+                }`}
+              >
+                <Share2 size={20} />
+              </button>
+
+              {/* Route Planner Icon */}
+              <button
+                onClick={() => {
+                  setIsOpen(true);
+                  setTimeout(() => document.getElementById('section-route')?.scrollIntoView({ behavior: 'smooth' }), 100);
+                }}
+                title={language === 'hi' ? "मार्ग योजनाकार" : "Safe Route Planner"}
+                className={`w-11 h-11 rounded-xl flex items-center justify-center cursor-pointer transition-all border shadow-sm ${
+                  routeDestination
+                    ? 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500'
+                    : 'bg-white hover:bg-slate-50 text-slate-655 border-slate-200'
+                }`}
+              >
+                <MapPin size={20} />
+              </button>
+
+              {/* Filters Icon */}
+              <button
+                onClick={() => {
+                  setIsOpen(true);
+                  setTimeout(() => document.getElementById('section-filters')?.scrollIntoView({ behavior: 'smooth' }), 100);
+                }}
+                title={language === 'hi' ? "घटना फिल्टर" : "Incident Filters"}
+                className="w-11 h-11 rounded-xl bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 flex items-center justify-center cursor-pointer transition-all shadow-sm"
+              >
+                <Search size={20} />
               </button>
             </div>
-          </motion.div>
+            
+            {/* User Avatar Circle */}
+            <div className="flex flex-col items-center">
+              {currentUser ? (
+                <div 
+                  onClick={() => setIsOpen(true)}
+                  className="w-10 h-10 rounded-full bg-cyan-100 border border-cyan-200 flex items-center justify-center text-cyan-700 font-extrabold text-sm uppercase cursor-pointer hover:scale-105 transition-transform"
+                  title={`${currentUser.name} (${currentUser.username})`}
+                >
+                  {currentUser.name ? currentUser.name[0] : currentUser.username[0]}
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowAuthModal(true)}
+                  className="w-10 h-10 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-950 flex items-center justify-center text-white cursor-pointer transition-all shadow-sm"
+                  title="Sign In"
+                >
+                  <User size={18} />
+                </button>
+              )}
+            </div>
+
+            {/* Expand Pull-tab on the right edge */}
+            <button
+              onClick={() => setIsOpen(true)}
+              title={language === 'hi' ? "पैनल फैलाएं" : "Expand Panel"}
+              className="absolute -right-3 top-1/2 -translate-y-1/2 w-3 h-16 bg-white border border-slate-200 border-l-0 rounded-r-xl shadow-md flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-slate-50 hover:w-4 hover:-right-4 transition-all duration-200 group z-[1001]"
+            >
+              <div className="w-[2px] h-[3px] rounded-full bg-slate-400" />
+              <div className="w-[2px] h-[3px] rounded-full bg-slate-400" />
+              <div className="w-[2px] h-[3px] rounded-full bg-slate-400" />
+            </button>
+          </div>
         )}
-      </AnimatePresence>
+      </motion.div>
 
     </div>
   );

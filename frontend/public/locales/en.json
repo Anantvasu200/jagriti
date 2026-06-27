@@ -1,0 +1,105 @@
+{
+  "header": {
+    "title": "Jagriti",
+    "subtitle": "Know Your Surroundings. Stay Safe.",
+    "toggleLanguage": "हिंदी"
+  },
+  "map": {
+    "loading": "Loading map...",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "searchPlaceholder": "Search location..."
+  },
+  "heatmap": {
+    "title": "Crime Heatmap",
+    "incident": "Incident",
+    "incidents": "Incidents",
+    "noData": "No incidents in this area"
+  },
+  "filters": {
+    "crimeType": "Crime Type",
+    "dateRange": "Date Range",
+    "all": "All",
+    "theft": "Theft",
+    "assault": "Assault",
+    "harassment": "Harassment",
+    "suspicious": "Suspicious Activity",
+    "unsafeRoad": "Unsafe Road",
+    "other": "Other",
+    "dateFilter": "Date Filter",
+    "today": "Today",
+    "clear": "Clear",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "dataSource": "Data Source",
+    "both": "Both",
+    "liveTips": "Live Tips",
+    "ncrb": "NCRB",
+    "timeOfDay": "Time of Day",
+    "hours24": "24 Hours",
+    "day": "Day",
+    "night": "Night",
+    "incidentFilters": "Incident Filters",
+    "category": "Category"
+  },
+  "safetyScore": {
+    "overall": "Overall Safety",
+    "womenSafety": "Women Safety",
+    "travelerSafety": "Traveler Safety",
+    "score": "Score"
+  },
+  "community": {
+    "reportIncident": "Report Incident",
+    "anonymous": "Anonymous",
+    "verified": "Verified",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "reportTip": "Report Anonymous Tip"
+  },
+  "aiAssistant": {
+    "askQuestion": "Ask a safety question...",
+    "placeholder": "E.g., Is this area safe at night for women?"
+  },
+  "sos": {
+    "emergencyServices": "Emergency Services",
+    "shareLocation": "Share Location",
+    "callPolice": "Call Police",
+    "sosBroadcasting": "SOS Alert Broadcasting",
+    "emergencySos": "Emergency Assistance",
+    "triggerSos": "TRIGGER EMERGENCY SOS",
+    "safeCancel": "✓ I AM SAFE - CANCEL ALERT"
+  },
+  "navigation": {
+    "routePlanner": "Safe Route Planner",
+    "destination": "Destination",
+    "destPlaceholder": "Enter destination address...",
+    "calculatingPaths": "Calculating safest paths...",
+    "clearRoute": "Clear Route",
+    "routeComparison": "Route Comparison",
+    "safestPath": "Safest Path",
+    "alternative": "Alternative Route",
+    "safeLevel": "SAFE",
+    "preferredLanguage": "Preferred Language",
+    "terminal": "Guard Terminal",
+    "activeProtection": "Jagriti Active Protection",
+    "gpsLocked": "GPS LOCKED",
+    "gpsBlocked": "GPS BLOCKED",
+    "acquiring": "ACQUIRING...",
+    "anonymousSession": "Anonymous Session",
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "liveLocation": "Live Location Sharing",
+    "trackingActive": "Live Tracking Active",
+    "startSharing": "Start Sharing",
+    "stopSharing": "Stop Sharing",
+    "safeInfra": "Safe Infrastructure",
+    "showNearby": "Show Nearby Safe Spots Layer",
+    "searchRadius": "Search Radius",
+    "nearestSafe": "Nearest Safe Places",
+    "searchingSpots": "Searching nearby safe spots...",
+    "noPlaces": "🚫 No safe places located within current radius. Click search to load places.",
+    "enableGpsPrompt": "💡 Enable GPS location to calculate exact proximity distances to safe zones.",
+    "closePanel": "Close Panel",
+    "searchThisArea": "🔍 Search This Area"
+  }
+}

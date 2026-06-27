@@ -48,7 +48,8 @@ export default function MapView({
   refreshTrigger,
   setShowAuthModal,
   setSafeSpots,
-  setLoadingSafeSpots
+  setLoadingSafeSpots,
+  language
 }) {
   const mapRef = useRef(null)
   const markerClusterGroupRef = useRef(null)
@@ -64,6 +65,8 @@ export default function MapView({
   const routeLayersRef = useRef([])
   const safeSpotsMarkersRef = useRef([])
   const warnedIncidentsRef = useRef(new Set())
+  const [activeSharers, setActiveSharers] = useState([])
+  const warnedUsersRef = useRef(new Set())
 
   // Reverse geocode user coordinates to a location name
   useEffect(() => {
@@ -78,8 +81,8 @@ export default function MapView({
       
       const fetchLocationName = async () => {
         try {
-          const url = `https://nominatim.openstreetmap.org/reverse?lat=${userLocation.lat}&lon=${userLocation.lng}&format=json&accept-language=en`
-          const res = await fetch(url, { headers: { 'Accept-Language': 'en' } })
+          const url = `https://nominatim.openstreetmap.org/reverse?lat=${userLocation.lat}&lon=${userLocation.lng}&format=json&accept-language=${language}`
+          const res = await fetch(url, { headers: { 'Accept-Language': language } })
           const data = await res.json()
           if (data && data.display_name) {
             // Get simplified address (e.g. Road name / Suburb)
@@ -96,7 +99,7 @@ export default function MapView({
       }
       fetchLocationName()
     }
-  }, [userLocation])
+  }, [userLocation, language])
 
   // Real-time other active sharers rendering
   useEffect(() => {
@@ -119,18 +122,22 @@ export default function MapView({
         if (user.userId === currentUserId) return
         updateSharerMarker(user)
       })
+
+      setActiveSharers(list)
     }
 
     const handleSharerStarted = (user) => {
       const currentUserId = localStorage.getItem('jagriti_user_id')
       if (user.userId === currentUserId) return
       updateSharerMarker(user)
+      setActiveSharers(prev => [...prev.filter(u => u.userId !== user.userId), user])
     }
 
     const handleSharerLocationUpdated = (user) => {
       const currentUserId = localStorage.getItem('jagriti_user_id')
       if (user.userId === currentUserId) return
       updateSharerMarker(user)
+      setActiveSharers(prev => [...prev.filter(u => u.userId !== user.userId), user])
     }
 
     const handleSharerStopped = ({ userId }) => {
@@ -139,6 +146,7 @@ export default function MapView({
         marker.remove()
         sharersMarkersRef.current.delete(userId)
       }
+      setActiveSharers(prev => prev.filter(u => u.userId !== userId))
     }
 
     const updateSharerMarker = (user) => {
@@ -153,7 +161,7 @@ export default function MapView({
             html: `
               <div class="relative flex items-center justify-center w-6 h-6 animate-pulse">
                 <div class="absolute w-4 h-4 bg-emerald-500/60 rounded-full animate-ping"></div>
-                <div class="relative w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full shadow-[0_0_8px_rgba(16,185,129,0.6)]"></div>
+                <div class="relative w-3.5 h-3.5 bg-emerald-50 border-2 border-white rounded-full shadow-[0_0_8px_rgba(16,185,129,0.6)]"></div>
               </div>
             `,
             iconSize: [24, 24],
@@ -161,8 +169,8 @@ export default function MapView({
           })
         }).addTo(map).bindPopup(`
           <div style="font-family: 'Inter', sans-serif; font-size: 0.8rem; text-align: center;">
-            🟢 <strong>Active Safety Share</strong><br/>
-            <span style="color: #64748b; font-size: 0.75rem;">Anonymous user sharing track</span>
+            🟢 <strong>${language === 'hi' ? 'सक्रिय सुरक्षा सदस्य' : 'Active Safety Share'}</strong><br/>
+            <span style="color: #64748b; font-size: 0.75rem;">${language === 'hi' ? 'अनाम सदस्य अपना ट्रैक साझा कर रहा है' : 'Anonymous user sharing track'}</span>
           </div>
         `)
         sharersMarkersRef.current.set(userId, newMarker)
@@ -182,7 +190,60 @@ export default function MapView({
       socket.off('sharing:location_updated', handleSharerLocationUpdated)
       socket.off('sharing:stopped', handleSharerStopped)
     }
-  }, [mapInstanceRef.current])
+  }, [mapInstanceRef.current, language])
+
+  // Proximity check for other active users nearby
+  const checkNearbyUsers = (sharersList) => {
+    if (!userLocation || !sharersList || sharersList.length === 0) return;
+    
+    // Both devices must have stable coordinates and high confidence (>= 0.75)
+    if (userLocation.confidence < 0.75 || !userLocation.isStable) return;
+
+    sharersList.forEach(u => {
+      const currentUserId = localStorage.getItem('jagriti_user_id')
+      if (u.userId === currentUserId) return;
+
+      const otherConfidence = u.confidence !== undefined ? u.confidence : 1.0;
+      const otherIsStable = u.isStable !== undefined ? u.isStable : true;
+
+      if (otherConfidence >= 0.75 && otherIsStable) {
+        const distKm = getDistanceKm(userLocation.lat, userLocation.lng, u.lat, u.lng);
+        const distM = distKm * 1000;
+
+        if (distM <= 50) {
+          const warnKey = `${u.userId}_nearby`;
+          if (!warnedUsersRef.current.has(warnKey)) {
+            warnedUsersRef.current.add(warnKey);
+
+            const msg = language === 'hi'
+              ? `⚠️ सुरक्षा चेतावनी: एक सक्रिय सदस्य आपके पास है (${distM.toFixed(0)} मीटर की दूरी पर)`
+              : `⚠️ Proximity Alert: Another active safety user is nearby (${distM.toFixed(0)}m away)`;
+
+            if (showNotification) showNotification(msg);
+
+            if ('Notification' in window && Notification.permission === 'granted') {
+              new Notification(language === 'hi' ? 'जागृति सुरक्षा चेतावनी' : 'Jagriti Proximity Warning', {
+                body: language === 'hi' 
+                  ? `सक्रिय सुरक्षा सदस्य आपके अत्यंत निकट है (${distM.toFixed(0)}मी)।` 
+                  : `Active safety user is nearby (${distM.toFixed(0)}m).`,
+                icon: '/icon-192x192.png'
+              });
+            }
+          }
+        } else {
+          const warnKey = `${u.userId}_nearby`;
+          if (warnedUsersRef.current.has(warnKey) && distM > 70) {
+            warnedUsersRef.current.delete(warnKey);
+          }
+        }
+      }
+    });
+  }
+
+  // Check nearby users whenever user location or active sharers updates
+  useEffect(() => {
+    checkNearbyUsers(activeSharers);
+  }, [userLocation, activeSharers, language]);
 
   // Real-time user location marker
   useEffect(() => {
@@ -248,88 +309,80 @@ export default function MapView({
 
     const fetchRoutes = async () => {
       try {
-        const url = `https://router.project-osrm.org/route/v1/driving/${userLocation.lng},${userLocation.lat};${routeDestination.lng},${routeDestination.lat}?overview=full&geometries=geojson&alternatives=true`
-        const res = await fetch(url)
-        const data = await res.json()
+        const response = await fetch(`${API_BASE_URL}/api/routes/suggest`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            startLat: userLocation.lat,
+            startLon: userLocation.lng,
+            endLat: routeDestination.lat,
+            endLon: routeDestination.lng,
+            transportMode: 'car'
+          })
+        })
+        const data = await response.json()
         
-        if (data.code !== 'Ok' || !data.routes || data.routes.length === 0) {
-          if (showNotification) showNotification('No routes found to the destination.')
+        if (data.status !== 'success' || !data.routes || data.routes.length === 0) {
+          if (showNotification) showNotification(language === 'hi' ? 'मार्ग की गणना करने में विफल।' : 'No routes found to the destination.')
           return
         }
 
-        // Score each route based on safety hazards
-        const scoredRoutes = data.routes.map((route, index) => {
-          const penalizedIncidents = new Set()
-          
-          // Check route nodes for proximity to incidents
-          route.geometry.coordinates.forEach(coord => {
-            const [lng, lat] = coord
-            incidents.forEach(inc => {
-              const incLng = inc.location?.coordinates?.[0]
-              const incLat = inc.location?.coordinates?.[1]
-              if (incLng && incLat) {
-                const incId = inc.id || inc._id || `${incLat}-${incLng}`
-                if (!penalizedIncidents.has(incId)) {
-                  const dist = getDistanceKm(lat, lng, incLat, incLng)
-                  if (dist <= 0.3) { // 300 meters warning threshold
-                    penalizedIncidents.add(incId)
-                  }
-                }
-              }
-            })
-          })
-
-          // Calculate penalty score
-          let totalPenalty = 0
-          penalizedIncidents.forEach(id => {
-            const inc = incidents.find(i => (i.id || i._id || `${i.location?.coordinates?.[1]}-${i.location?.coordinates?.[0]}`) === id)
-            if (inc) {
-              if (inc.type === 'assault') totalPenalty += 25
-              else if (inc.type === 'harassment') totalPenalty += 15
-              else if (inc.type === 'suspicious') totalPenalty += 10
-              else if (inc.type === 'theft') totalPenalty += 5
-              else totalPenalty += 2
-            }
-          })
-
-          const safetyScore = Math.max(5, 100 - totalPenalty)
-          return {
-            ...route,
-            safetyScore,
-            originalIndex: index
-          }
-        })
-
-        // Sort routes: Safest first
-        scoredRoutes.sort((a, b) => b.safetyScore - a.safetyScore)
-
+        const scoredRoutes = data.routes;
         setRoutesData(scoredRoutes)
-        setSelectedRouteIndex(0) // Default to safest
 
         // Draw routes on map
         scoredRoutes.forEach((route, idx) => {
-          const isSelected = idx === 0
+          const isSelected = idx === selectedRouteIndex
           
-          // Reverse GeoJSON coords [lng, lat] to Leaflet [lat, lng]
-          const latLngs = route.geometry.coordinates.map(c => [c[1], c[0]])
-          
-          const polyline = L.polyline(latLngs, {
-            color: isSelected ? '#10b981' : '#94a3b8',
-            weight: isSelected ? 6 : 4,
-            opacity: isSelected ? 0.95 : 0.4,
-            lineJoin: 'round'
-          }).addTo(map)
-
-          polyline.bindPopup(`
-            <div style="font-family: 'Inter', sans-serif; font-size: 0.75rem;">
-              <strong>${idx === 0 ? '🏆 Safest Path' : `Alternative Route ${idx}`}</strong><br/>
-              Distance: ${(route.distance / 1000).toFixed(1)} km<br/>
-              Est. Time: ${Math.round(route.duration / 60)} mins<br/>
-              Safety Level: <span style="font-weight: bold; color: ${route.safetyScore >= 85 ? '#10b981' : route.safetyScore >= 65 ? '#f97316' : '#ef4444'}">${route.safetyScore}% Safe</span>
-            </div>
-          `)
-
-          routeLayersRef.current.push(polyline)
+          if (isSelected) {
+            // Draw color-coded segments for the active route
+            route.segments.forEach(seg => {
+              const segLatLngs = seg.coordinates
+              const colorMap = {
+                green: '#10b981',
+                yellow: '#f59e0b',
+                red: '#ef4444'
+              }
+              const color = colorMap[seg.colorCode] || '#10b981'
+              
+              const polyline = L.polyline(segLatLngs, {
+                color,
+                weight: 6,
+                opacity: 0.95,
+                lineJoin: 'round'
+              }).addTo(map)
+              
+              polyline.bindPopup(`
+                <div style="font-family: 'Inter', sans-serif; font-size: 0.75rem;">
+                  <strong>${language === 'hi' ? 'मार्ग खंड' : 'Route Segment'}</strong><br/>
+                  ${language === 'hi' ? 'सुरक्षा स्कोर' : 'Safety Score'}: <span style="font-weight: bold; color: ${color}">${seg.safetyScore}%</span><br/>
+                  ${language === 'hi' ? 'आस-पास के खतरे' : 'Hotspots Nearby'}: <strong>${seg.incidentsNearby}</strong>
+                </div>
+              `)
+              
+              routeLayersRef.current.push(polyline)
+            })
+          } else {
+            // Draw alternative routes as thin grey lines
+            const latLngs = route.geometry.coordinates.map(c => [c[1], c[0]])
+            const polyline = L.polyline(latLngs, {
+              color: '#94a3b8',
+              weight: 4,
+              opacity: 0.4,
+              lineJoin: 'round'
+            }).addTo(map)
+            
+            polyline.bindPopup(`
+              <div style="font-family: 'Inter', sans-serif; font-size: 0.75rem;">
+                <strong>${language === 'hi' ? `वैकल्पिक मार्ग ${idx}` : `Alternative Route ${idx}`}</strong><br/>
+                ${language === 'hi' ? 'दूरी' : 'Distance'}: ${(route.distance / 1000).toFixed(1)} km<br/>
+                ${language === 'hi' ? 'समय' : 'Time'}: ${Math.round(route.duration / 60)} mins<br/>
+                ${language === 'hi' ? 'सुरक्षा स्तर' : 'Safety'}: <strong>${route.safetyScore}%</strong>
+              </div>
+            `)
+            
+            routeLayersRef.current.push(polyline)
+          }
         })
 
         // Zoom map to fit the safest route bounds
@@ -346,7 +399,7 @@ export default function MapView({
 
     fetchRoutes()
 
-  }, [userLocation, routeDestination])
+  }, [userLocation, routeDestination, selectedRouteIndex, language])
 
   // Update route path styling when selection changes
   useEffect(() => {
@@ -387,6 +440,7 @@ export default function MapView({
 
     if (!filters.showSafeSpots) {
       clearSafeSpots()
+      setSafeSpots([])
       return
     }
 
@@ -394,8 +448,29 @@ export default function MapView({
       police: '🚨',
       hospital: '🏥',
       pharmacy: '💊',
-      metro: '🚇'
+      metro: '🚇',
+      fuel: '⛽',
+      ev_charging: '⚡'
     }
+
+    const typeNames = {
+      en: {
+        police: 'Police Station/Chowki',
+        hospital: 'Hospital/Clinic',
+        pharmacy: 'Chemist/Pharmacy',
+        metro: 'Metro Station',
+        fuel: 'Petrol/CNG Pump',
+        ev_charging: 'EV Charging Station'
+      },
+      hi: {
+        police: 'पुलिस स्टेशन/चौकी',
+        hospital: 'अस्पताल/क्लिनिक',
+        pharmacy: 'केमिस्ट/दवा की दुकान',
+        metro: 'मेट्रो स्टेशन',
+        fuel: 'पेट्रोल/सीएनजी पंप',
+        ev_charging: 'ईवी चार्जिंग स्टेशन'
+      }
+    };
 
     const updateSafeSpots = async () => {
       try {
@@ -441,14 +516,16 @@ export default function MapView({
 
           const distanceText = distanceKm !== null
             ? `<span style="font-size: 0.68rem; font-weight: 800; color: #10b981; display: block; margin-top: 4px;">
-                 📍 ${(distanceKm * 1000) < 1000 ? `${Math.round(distanceKm * 1000)}m` : `${distanceKm.toFixed(2)} km`} away
+                 📍 ${(distanceKm * 1000) < 1000 ? `${Math.round(distanceKm * 1000)}m` : `${distanceKm.toFixed(2)} km`} ${language === 'hi' ? 'दूर' : 'away'}
                </span>`
             : '';
+
+          const spotTypeLabel = (typeNames[language] || typeNames['en'])[spot.type] || spot.type;
 
           const popupContent = `
             <div style="font-family: 'Inter', sans-serif; min-width: 140px; padding: 2px 4px;">
               <div style="font-weight: 800; font-size: 0.7rem; text-transform: uppercase; color: #10b981; margin-bottom: 2px;">
-                🛡️ Nearby ${spot.type}
+                🛡️ ${language === 'hi' ? `आस-पास का ${spotTypeLabel}` : `Nearby ${spotTypeLabel}`}
               </div>
               <strong style="font-size: 0.78rem; color: #1e293b; display: block; margin-bottom: 3px;">
                 ${spot.name}
@@ -472,20 +549,13 @@ export default function MapView({
       }
     }
 
-    // Run initial load
     updateSafeSpots()
 
-    // Listen for movement
-    map.on('moveend', updateSafeSpots)
-    map.on('zoomend', updateSafeSpots)
-
     return () => {
-      map.off('moveend', updateSafeSpots)
-      map.off('zoomend', updateSafeSpots)
       clearSafeSpots()
       setSafeSpots([])
     }
-  }, [filters.showSafeSpots, filters.safeSpotsRadius, userLocation])
+  }, [filters.showSafeSpots, filters.safeSpotsSearchTrigger, userLocation, language])
 
   // Proximity Warning Alert System (watches userLocation vs incidents coordinates)
   useEffect(() => {
@@ -706,7 +776,13 @@ export default function MapView({
         }
       }
 
-      return typeMatch && sourceMatch && dateMatch && timeMatch;
+      // Location Confidence check
+      let confidenceMatch = true;
+      if (inc.source === 'nlp' && !inc.isVerified) {
+        confidenceMatch = false;
+      }
+
+      return typeMatch && sourceMatch && dateMatch && timeMatch && confidenceMatch;
     })
 
     // Render based on mode
@@ -758,23 +834,29 @@ export default function MapView({
           dashArray: isUnverified ? '4' : '', // Dashed border for unverified or low-confidence reports
         })
 
+        const titleHi = inc.title_hi || '';
+        const descHi = inc.description_hi || '';
+
+        const activeTitle = language === 'hi' && titleHi ? titleHi : inc.title;
+        const activeDesc = language === 'hi' && descHi ? descHi : inc.description;
+
         // Clean up title and description from encoding glitches dynamically
-        const cleanTitle = (inc.title || '')
+        const cleanTitle = (activeTitle || '')
           .replace(/â€“/g, '–')
           .replace(/â€/g, '–')
           .replace(/â€™/g, "'")
           .replace(/Â/g, '');
 
-        const cleanDesc = (inc.description || '')
+        const cleanDesc = (activeDesc || '')
           .replace(/â€“/g, '–')
           .replace(/â€/g, '–')
           .replace(/â€™/g, "'")
           .replace(/Â/g, '');
 
         const sourceUrl = inc.sources && inc.sources.length > 0 ? inc.sources[0].sourceUrl : null;
-        const titleHtml = inc.title ? `<strong style="display:block; margin-bottom:6px; font-size:0.9rem; color:#1e293b; line-height:1.3;">${cleanTitle}</strong>` : '';
-        const descHtml = inc.description ? `<p style="color:#475569; font-size:0.8rem; margin-bottom:8px; line-height:1.4;">${cleanDesc}</p>` : '';
-        const sourceHtml = sourceUrl ? `<a href="${sourceUrl}" target="_blank" rel="noopener noreferrer" style="color:#3b82f6; font-size:0.75rem; text-decoration:none; display:inline-block; margin-top:4px; font-weight:600;">Read Source ↗</a>` : '';
+        const titleHtml = activeTitle ? `<strong style="display:block; margin-bottom:6px; font-size:0.9rem; color:#1e293b; line-height:1.3;">${cleanTitle}</strong>` : '';
+        const descHtml = activeDesc ? `<p style="color:#475569; font-size:0.8rem; margin-bottom:8px; line-height:1.4;">${cleanDesc}</p>` : '';
+        const sourceHtml = sourceUrl ? `<a href="${sourceUrl}" target="_blank" rel="noopener noreferrer" style="color:#3b82f6; font-size:0.75rem; text-decoration:none; display:inline-block; margin-top:4px; font-weight:600;">${language === 'hi' ? 'स्रोत पढ़ें ↗' : 'Read Source ↗'}</a>` : '';
 
         // Verification UI
         let verifyHtml = '';
@@ -782,16 +864,18 @@ export default function MapView({
           if (!inc.isVerified) {
             verifyHtml = `
               <div style="margin-top: 10px; padding: 8px; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 6px;">
-                <p style="font-size: 0.7rem; color: #c2410c; margin-bottom: 6px; font-weight: 600;">⚠️ Unverified Report (${inc.confirmations}/3 confirmations)</p>
+                <p style="font-size: 0.7rem; color: #c2410c; margin-bottom: 6px; font-weight: 600;">
+                  ${language === 'hi' ? `⚠️ असत्यापित रिपोर्ट (${inc.confirmations}/3 पुष्टि)` : `⚠️ Unverified Report (${inc.confirmations}/3 confirmations)`}
+                </p>
                 <button onclick="window.confirmCommunityIncident('${inc.id}')" style="width: 100%; padding: 6px; background: #f97316; color: white; border: none; border-radius: 4px; font-size: 0.75rem; font-weight: bold; cursor: pointer;">
-                  I can confirm this happened
+                  ${language === 'hi' ? 'मैं पुष्टि कर सकता हूँ कि यह हुआ था' : 'I can confirm this happened'}
                 </button>
               </div>
             `;
           } else {
             verifyHtml = `
               <div style="margin-top: 10px; display: flex; align-items: center; gap: 4px;">
-                <span style="color: #10b981; font-size: 0.75rem;">✓ Community Verified</span>
+                <span style="color: #10b981; font-size: 0.75rem;">✓ ${language === 'hi' ? 'कम्युनिटी द्वारा सत्यापित' : 'Community Verified'}</span>
               </div>
             `;
           }
@@ -799,32 +883,43 @@ export default function MapView({
            verifyHtml = `
               <div style="margin-top: 10px; padding: 8px; background: #fef2f2; border: 1px solid #fee2e2; border-radius: 6px;">
                 <span style="color: #ef4444; font-size: 0.7rem; font-weight: 600; display: flex; align-items: center; gap: 4px;">
-                  ⚠️ Unverified NLP (Low Confidence: ${(inc.confidence_score * 100).toFixed(0)}%)
+                  ${language === 'hi' ? `⚠️ असत्यापित एनएलपी (कम आत्मविश्वास: ${(inc.confidence_score * 100).toFixed(0)}%)` : `⚠️ Unverified NLP (Low Confidence: ${(inc.confidence_score * 100).toFixed(0)}%)`}
                 </span>
               </div>
             `;
         } else if (inc.source === 'ncrb') {
             verifyHtml = `
               <div style="margin-top: 10px; display: flex; align-items: center; gap: 4px;">
-                <span style="color: #3b82f6; font-size: 0.75rem; font-weight: 600;">🏛️ Official NCRB Data</span>
+                <span style="color: #3b82f6; font-size: 0.75rem; font-weight: 600;">🏛️ ${language === 'hi' ? 'आधिकारिक एनसीआरबी (NCRB) डेटा' : 'Official NCRB Data'}</span>
               </div>
             `;
         }
+
+        const crimeTypeLabels = {
+          all: { en: 'All Incidents', hi: 'सभी घटनाएं' },
+          theft: { en: 'Theft', hi: 'चोरी' },
+          harassment: { en: 'Harassment', hi: 'उत्पीड़न' },
+          assault: { en: 'Assault', hi: 'हमला' },
+          suspicious: { en: 'Suspicious', hi: 'संदिग्ध' },
+          other: { en: 'Other', hi: 'अन्य' }
+        };
+
+        const activeTypeLabel = (crimeTypeLabels[inc.type] || crimeTypeLabels.other)[language] || inc.type;
 
         marker.bindPopup(`
           <div style="font-family:'Inter', sans-serif; min-width:220px; max-width:260px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
               <strong style="color:${color}; text-transform:uppercase; letter-spacing:0.05em; font-size:0.75rem; padding: 2px 6px; background: ${color}20; border-radius: 4px; border: 1px solid ${color}40;">
-                ${inc.type}
+                ${activeTypeLabel}
               </strong>
               <span style="color:#64748b; font-size:0.7rem;">
-                ${new Date(inc.date).toLocaleDateString()}
+                ${new Date(inc.date).toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-US')}
               </span>
             </div>
             ${titleHtml}
             ${descHtml}
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; padding-top:8px; border-top: 1px solid #e2e8f0;">
-              <span style="color:#64748b; font-size:0.75rem;">📍 ${inc.city || 'Location'}</span>
+              <span style="color:#64748b; font-size:0.75rem;">📍 ${inc.city || (language === 'hi' ? 'स्थान' : 'Location')}</span>
               ${sourceHtml}
             </div>
             ${verifyHtml}
@@ -834,7 +929,7 @@ export default function MapView({
         markersGroup.addLayer(marker)
       })
     }
-  }, [filters, incidents, isHeatmap])
+  }, [filters, incidents, isHeatmap, language])
 
   return (
     <div className="absolute inset-0">
@@ -845,7 +940,7 @@ export default function MapView({
       {filters.showSafeSpots && currentZoom < 13 && (
         <div className="absolute top-[120px] left-1/2 -translate-x-1/2 z-[1000] bg-white border border-emerald-300 rounded-xl px-4 py-2 shadow-lg flex items-center gap-2 pointer-events-none transition-all duration-300 animate-bounce">
           <span className="text-emerald-700 font-extrabold text-[0.7rem] uppercase tracking-wider">
-            🔍 Zoom in closer to view Safe Spots Layer
+            {language === 'hi' ? '🔍 सुरक्षित स्थल देखने के लिए कृपया मानचित्र को और बड़ा (Zoom in) करें' : '🔍 Zoom in closer to view Safe Spots Layer'}
           </span>
         </div>
       )}
@@ -861,10 +956,10 @@ export default function MapView({
           text-slate-300 hover:text-white hover:bg-slate-800
           transition-all duration-300 cursor-pointer
         "
-        title="Toggle Heatmap"
+        title={language === 'hi' ? 'हीटमैप टॉगल करें' : 'Toggle Heatmap'}
       >
         <Layers size={18} className={isHeatmap ? 'text-cyan-500' : 'text-slate-400'} />
-        <span className="text-sm font-medium">{isHeatmap ? 'Heatmap' : 'Pins'}</span>
+        <span className="text-sm font-medium">{isHeatmap ? (language === 'hi' ? 'हीटमैप' : 'Heatmap') : (language === 'hi' ? 'पिन' : 'Pins')}</span>
       </button>
 
       {/* Locate Me Button */}

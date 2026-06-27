@@ -132,6 +132,26 @@ services:
       - "3001:3000"
     networks:
       - jagriti_net
+  osrm-backend:
+    image: osrm/osrm-backend:v5.27
+    container_name: jagriti_osrm
+    volumes:
+      - ./osrm-data:/data
+    ports:
+      - "5001:5000"
+    command: |
+      sh -c "
+      if [ ! -f /data/delhi-latest.osrm ]; then
+        echo 'Downloading Delhi OSM data...'
+        wget -O /data/delhi-latest.osm.pbf https://download.geofabrik.de/asia/india/delhi-latest.osm.pbf
+        osrm-extract -p /opt/car.lua /data/delhi-latest.osm.pbf
+        osrm-contract /data/delhi-latest.osrm
+      fi
+      osrm-routed --algorithm ch /data/delhi-latest.osrm
+      "
+    networks:
+      - jagriti_net
+    restart: unless-stopped
 volumes:
   postgres_data:
   chroma_data:

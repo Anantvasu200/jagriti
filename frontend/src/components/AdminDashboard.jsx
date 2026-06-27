@@ -63,6 +63,29 @@ export default function AdminDashboard({ currentUser, navigateTo, showNotificati
     }
   };
 
+  const handleVerify = async (id) => {
+    if (!window.confirm("Are you sure you want to verify the location of this incident?")) return;
+    try {
+      const token = localStorage.getItem('jagriti_token');
+      const response = await fetch(`${API_BASE_URL}/api/admin/incidents/${id}/verify`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const resData = await response.json();
+      if (resData.status === 'success') {
+        showNotification(resData.message);
+        fetchMetrics();
+      } else {
+        showNotification(resData.message || 'Verification failed.');
+      }
+    } catch (err) {
+      console.error(err);
+      showNotification('Network error verifying incident.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="fixed inset-0 bg-slate-50 flex flex-col items-center justify-center z-[5000]">
@@ -778,21 +801,39 @@ export default function AdminDashboard({ currentUser, navigateTo, showNotificati
                               {new Date(inc.createdAt).toLocaleString(undefined, {month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'})}
                             </td>
                             <td className="px-6 py-4">
-                              <span className={`flex items-center gap-1 text-[0.65rem] font-extrabold uppercase ${
-                                inc.isVerified ? 'text-emerald-600' : 'text-amber-600'
-                              }`}>
-                                {inc.isVerified ? (
-                                  <>
-                                    <CheckCircle size={12} />
-                                    <span>Verified</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <AlertTriangle size={12} />
-                                    <span>Pending</span>
-                                  </>
+                              <div className="flex flex-col gap-1.5">
+                                <span className={`flex items-center gap-1 text-[0.65rem] font-extrabold uppercase ${
+                                  inc.isVerified ? 'text-emerald-600' :
+                                  (inc.source === 'nlp' ? 'text-rose-600' : 'text-amber-600')
+                                }`}>
+                                  {inc.isVerified ? (
+                                    <>
+                                      <CheckCircle size={12} />
+                                      <span>Verified</span>
+                                    </>
+                                  ) : (
+                                    inc.source === 'nlp' ? (
+                                      <>
+                                        <AlertTriangle size={12} />
+                                        <span>Location Unverified</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <AlertTriangle size={12} />
+                                        <span>Pending</span>
+                                      </>
+                                    )
+                                  )}
+                                </span>
+                                {!inc.isVerified && (
+                                  <button
+                                    onClick={() => handleVerify(inc.id)}
+                                    className="px-2 py-1 text-[0.6rem] font-extrabold uppercase tracking-wider rounded bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer transition-all border-none w-fit"
+                                  >
+                                    Verify Location
+                                  </button>
                                 )}
-                              </span>
+                              </div>
                             </td>
                           </tr>
                         ))

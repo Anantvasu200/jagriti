@@ -52,6 +52,23 @@ const createIncident = async (req, res) => {
   }
 };
 
+const translateText = async (text, from, to) => {
+  if (!text || !text.trim()) return '';
+  try {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${from}&tl=${to}&dt=t&q=${encodeURIComponent(text)}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data && data[0]) {
+      return data[0].map(row => row[0]).join('');
+    }
+  } catch (err) {
+    logger.error('Translation helper error:', err);
+  }
+  return text;
+};
+
+const isHindi = (text) => /[\u0900-\u097F]/.test(text);
+
 // Community Reporting Endpoints
 const reportCommunityIncident = async (req, res) => {
   try {
@@ -61,9 +78,27 @@ const reportCommunityIncident = async (req, res) => {
       return res.status(400).json({ status: 'error', message: 'Lat, Lng, and userId are required' });
     }
 
+    const rawTitle = title || `Community Reported ${type}`;
+    const rawDesc = description || '';
+
+    let title_en = rawTitle;
+    let desc_en = rawDesc;
+    let title_hi = rawTitle;
+    let desc_hi = rawDesc;
+
+    if (isHindi(rawTitle) || isHindi(rawDesc)) {
+      title_en = await translateText(rawTitle, 'hi', 'en');
+      desc_en = await translateText(rawDesc, 'hi', 'en');
+    } else {
+      title_hi = await translateText(rawTitle, 'en', 'hi');
+      desc_hi = await translateText(rawDesc, 'en', 'hi');
+    }
+
     const newIncident = await Incident.create({
-      title: title || `Community Reported ${type}`,
-      description,
+      title: title_en,
+      description: desc_en,
+      title_hi,
+      description_hi: desc_hi,
       type,
       date: new Date(),
       location: { type: 'Point', coordinates: [lng, lat] },
@@ -75,7 +110,7 @@ const reportCommunityIncident = async (req, res) => {
 
     await CommunityReport.create({
       incidentId: newIncident.id,
-      reportDetails: description,
+      reportDetails: desc_en,
       userId
     });
 

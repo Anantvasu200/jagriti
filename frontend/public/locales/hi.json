@@ -1,0 +1,105 @@
+{
+  "header": {
+    "title": "जागृति",
+    "subtitle": "अपने आसपास को जानें। सुरक्षित रहें।",
+    "toggleLanguage": "English"
+  },
+  "map": {
+    "loading": "नक्शा लोड हो रहा है...",
+    "zoomIn": "बड़ा करें",
+    "zoomOut": "छोटा करें",
+    "searchPlaceholder": "स्थान खोजें..."
+  },
+  "heatmap": {
+    "title": "अपराध हीटमैप",
+    "incident": "घटना",
+    "incidents": "घटनाएं",
+    "noData": "इस क्षेत्र में कोई घटना नहीं"
+  },
+  "filters": {
+    "crimeType": "अपराध का प्रकार",
+    "dateRange": "तारीख की श्रेणी",
+    "all": "सभी",
+    "theft": "चोरी",
+    "assault": "हमला",
+    "harassment": "उत्पीड़न",
+    "suspicious": "संदिग्ध गतिविधि",
+    "unsafeRoad": "असुरक्षित सड़क",
+    "other": "अन्य",
+    "dateFilter": "दिनांक फिल्टर",
+    "today": "आज",
+    "clear": "साफ करें",
+    "startDate": "प्रारंभ तिथि",
+    "endDate": "अंतिम तिथि",
+    "dataSource": "डेटा स्रोत",
+    "both": "दोनों",
+    "liveTips": "लाइव टिप्स",
+    "ncrb": "एनसीआरबी (NCRB)",
+    "timeOfDay": "दिन का समय",
+    "hours24": "24 घंटे",
+    "day": "दिन",
+    "night": "रात",
+    "incidentFilters": "घटना फिल्टर",
+    "category": "श्रेणी"
+  },
+  "safetyScore": {
+    "overall": "कुल सुरक्षा",
+    "womenSafety": "महिला सुरक्षा",
+    "travelerSafety": "यात्री सुरक्षा",
+    "score": "अंक"
+  },
+  "community": {
+    "reportIncident": "घटना की रिपोर्ट करें",
+    "anonymous": "गुमनाम",
+    "verified": "सत्यापित",
+    "submit": "जमा करें",
+    "cancel": "रद्द करें",
+    "reportTip": "अनाम सुरक्षा रिपोर्ट दर्ज करें"
+  },
+  "aiAssistant": {
+    "askQuestion": "सुरक्षा का प्रश्न पूछें...",
+    "placeholder": "उदा., क्या यह क्षेत्र रात को महिलाओं के लिए सुरक्षित है?"
+  },
+  "sos": {
+    "emergencyServices": "आपातकालीन सेवाएं",
+    "shareLocation": "स्थान साझा करें",
+    "callPolice": "पुलिस को कॉल करें",
+    "sosBroadcasting": "एसओएस अलर्ट सक्रिय",
+    "emergencySos": "आपातकालीन सहायता",
+    "triggerSos": "एसओएस आपातकाल सक्रिय करें",
+    "safeCancel": "✓ मैं सुरक्षित हूँ - रद्द करें"
+  },
+  "navigation": {
+    "routePlanner": "सुरक्षित मार्ग योजनाकार",
+    "destination": "गंतव्य",
+    "destPlaceholder": "गंतव्य का पता दर्ज करें...",
+    "calculatingPaths": "सुरक्षित रास्तों की गणना की जा रही है...",
+    "clearRoute": "मार्ग साफ करें",
+    "routeComparison": "मार्ग तुलना",
+    "safestPath": "सबसे सुरक्षित रास्ता",
+    "alternative": "वैकल्पिक मार्ग",
+    "safeLevel": "सुरक्षित",
+    "preferredLanguage": "भाषा का चयन",
+    "terminal": "सुरक्षा टर्मिनल",
+    "activeProtection": "जागृति सक्रिय सुरक्षा",
+    "gpsLocked": "जीपीएस लॉक",
+    "gpsBlocked": "जीपीएस अवरुद्ध",
+    "acquiring": "खोज रहा है...",
+    "anonymousSession": "अनाम सत्र",
+    "signIn": "साइन इन",
+    "signOut": "लॉगआउट",
+    "liveLocation": "लोकेशन शेयरिंग",
+    "trackingActive": "लाइव ट्रैकिंग सक्रिय",
+    "startSharing": "लोकेशन शेयर करें",
+    "stopSharing": "शेयर करना बंद करें",
+    "safeInfra": "सुरक्षित बुनियादी ढांचा",
+    "showNearby": "आस-पास के सुरक्षित स्थल दिखाएं",
+    "searchRadius": "खोज त्रिज्या",
+    "nearestSafe": "निकटतम सुरक्षित स्थान",
+    "searchingSpots": "सुरक्षित स्थानों की खोज की जा रही है...",
+    "noPlaces": "🚫 वर्तमान त्रिज्या में कोई सुरक्षित स्थान नहीं मिला। खोजने के लिए क्लिक करें।",
+    "enableGpsPrompt": "💡 सुरक्षित क्षेत्रों के सटीक दूरी की गणना के लिए जीपीएस ऑन करें।",
+    "closePanel": "पैनल बंद करें",
+    "searchThisArea": "🔍 इस क्षेत्र में खोजें"
+  }
+}

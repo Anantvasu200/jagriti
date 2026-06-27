@@ -1,8 +1,12 @@
 /**
- * Overpass API Service to fetch nearby safe spots (Police, Hospitals, Pharmacies, Metro Stations)
+ * Overpass API Service to fetch nearby safe spots
+ * Categories: Police, Hospitals/Clinics, Pharmacies/Chemists, Metro Stations, Petrol/CNG Pumps, EV Charging Stations
  */
 
 const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
+
+// Memory cache for safe spots query results
+const safeSpotsCache = new Map();
 
 export async function fetchSafeSpots(bounds) {
   if (!bounds) return [];
@@ -10,7 +14,15 @@ export async function fetchSafeSpots(bounds) {
   const sw = bounds._southWest || bounds.getSouthWest();
   const ne = bounds._northEast || bounds.getNorthEast();
 
-  // Overpass bbox format: (minlat, minlon, maxlat, maxlon)
+  // Create a cache key by rounding coordinate bounds to 4 decimal places (~11m accuracy)
+  // This reduces duplicate network calls when map is moved or zoomed slightly
+  const cacheKey = `${sw.lat.toFixed(4)},${sw.lng.toFixed(4)},${ne.lat.toFixed(4)},${ne.lng.toFixed(4)}`;
+
+  if (safeSpotsCache.has(cacheKey)) {
+    console.log('[Overpass Caching] Returning cached safe spots for bbox:', cacheKey);
+    return safeSpotsCache.get(cacheKey);
+  }
+
   const bbox = `${sw.lat},${sw.lng},${ne.lat},${ne.lng}`;
 
   const query = `
@@ -18,12 +30,17 @@ export async function fetchSafeSpots(bounds) {
     (
       node["amenity"="police"](${bbox});
       way["amenity"="police"](${bbox});
-      node["amenity"="hospital"](${bbox});
-      way["amenity"="hospital"](${bbox});
+      node["amenity"~"hospital|clinic|doctors"](${bbox});
+      way["amenity"~"hospital|clinic|doctors"](${bbox});
       node["amenity"="pharmacy"](${bbox});
       way["amenity"="pharmacy"](${bbox});
-      node["railway"="subway"](${bbox});
-      node["railway"="station"](${bbox});
+      node["shop"~"chemist|pharmacy"](${bbox});
+      way["shop"~"chemist|pharmacy"](${bbox});
+      node["railway"~"subway|station"](${bbox});
+      node["amenity"="fuel"](${bbox});
+      way["amenity"="fuel"](${bbox});
+      node["amenity"="charging_station"](${bbox});
+      way["amenity"="charging_station"](${bbox});
     );
     out center;
   `;
@@ -35,27 +52,56 @@ export async function fetchSafeSpots(bounds) {
     
     if (!data.elements) return [];
 
-    return data.elements.map(el => {
+    const results = [];
+    data.elements.forEach(el => {
       const isNode = el.type === 'node';
-      const lat = isNode ? el.lat : el.center.lat;
-      const lng = isNode ? el.lon : el.center.lng;
+      const lat = isNode ? el.lat : (el.center ? el.center.lat : null);
+      const lng = isNode ? el.lon : (el.center ? el.center.lon : null);
+
+      if (lat === null || lat === undefined || lng === null || lng === undefined) {
+        return;
+      }
 
       // Classify amenity types
       let type = 'other';
-      if (el.tags.amenity === 'police') type = 'police';
-      else if (el.tags.amenity === 'hospital') type = 'hospital';
-      else if (el.tags.amenity === 'pharmacy') type = 'pharmacy';
-      else if (el.tags.railway === 'subway' || el.tags.railway === 'station') type = 'metro';
+      let typeLabel = 'Safe Zone';
+      if (el.tags.amenity === 'police') {
+        type = 'police';
+        typeLabel = 'Police Station/Chowki';
+      } else if (el.tags.amenity === 'hospital' || el.tags.amenity === 'clinic' || el.tags.amenity === 'doctors') {
+        type = 'hospital';
+        typeLabel = 'Hospital/Clinic';
+      } else if (el.tags.amenity === 'pharmacy' || el.tags.shop === 'chemist' || el.tags.shop === 'pharmacy') {
+        type = 'pharmacy';
+        typeLabel = 'Chemist Shop';
+      } else if (el.tags.railway === 'subway' || el.tags.railway === 'station') {
+        type = 'metro';
+        typeLabel = 'Metro Station';
+      } else if (el.tags.amenity === 'fuel') {
+        type = 'fuel';
+        typeLabel = 'Petrol/CNG Pump';
+      } else if (el.tags.amenity === 'charging_station') {
+        type = 'ev_charging';
+        typeLabel = 'EV Charging Station';
+      }
 
-      return {
+      // Format description/details
+      const street = el.tags['addr:street'] || el.tags['addr:full'] || '';
+      const suburb = el.tags['addr:suburb'] || el.tags['addr:subdivision'] || '';
+      const address = [street, suburb].filter(Boolean).join(', ') || typeLabel;
+
+      results.push({
         id: el.id,
         lat,
         lng,
-        name: el.tags.name || el.tags.operator || `Nearby ${type}`,
+        name: el.tags.name || el.tags.operator || `Nearby ${typeLabel}`,
         type,
-        details: el.tags['addr:street'] || el.tags['addr:full'] || 'Safe Zone'
-      };
+        details: address
+      });
     });
+
+    safeSpotsCache.set(cacheKey, results);
+    return results;
   } catch (error) {
     console.error('Failed to query Overpass API:', error);
     return [];

@@ -92,13 +92,16 @@ const initSocket = (server) => {
 
     // Listen for live location sharing trigger
     socket.on('sharing:start', (data) => {
-      const { userId, lat, lng } = data;
+      const { userId, lat, lng, accuracy, confidence, isStable } = data;
       logger.info(`📍 Live location sharing started by user ${userId} at [${lat}, ${lng}]`);
 
       const sharerData = {
         userId,
         lat,
         lng,
+        accuracy: accuracy || 15,
+        confidence: confidence !== undefined ? confidence : 1.0,
+        isStable: isStable !== undefined ? isStable : true,
         timestamp: new Date()
       };
 
@@ -110,16 +113,26 @@ const initSocket = (server) => {
 
     // Listen for live location sharing coordinates updates
     socket.on('sharing:update_location', (data) => {
-      const { userId, lat, lng } = data;
+      const { userId, lat, lng, accuracy, confidence, isStable } = data;
       const sharer = activeSharers.get(userId);
       if (sharer) {
         sharer.lat = lat;
         sharer.lng = lng;
+        sharer.accuracy = accuracy || 15;
+        sharer.confidence = confidence !== undefined ? confidence : 1.0;
+        sharer.isStable = isStable !== undefined ? isStable : true;
         sharer.timestamp = new Date();
         activeSharers.set(userId, sharer);
 
         // Broadcast updated coordinates to all users
-        io.emit('sharing:location_updated', { userId, lat, lng });
+        io.emit('sharing:location_updated', { 
+          userId, 
+          lat, 
+          lng,
+          accuracy: sharer.accuracy,
+          confidence: sharer.confidence,
+          isStable: sharer.isStable
+        });
       }
     });
 

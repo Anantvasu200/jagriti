@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   MapPin, Navigation, Car, Bike, Truck, Eye, ArrowLeft, Loader2, Globe, Sparkles 
 } from 'lucide-react';
@@ -64,7 +65,18 @@ export default function SafeRoutePanel({
   onClose,
   showNotification
 }) {
-  const t = TRANSLATIONS[language];
+  const { t: i18nT } = useTranslation();
+  const t = new Proxy({}, {
+    get(target, prop) {
+      const categories = ['header', 'map', 'heatmap', 'filters', 'safetyScore', 'community', 'aiAssistant', 'sos', 'navigation'];
+      for (const cat of categories) {
+        const key = `${cat}.${prop}`;
+        const val = i18nT(key);
+        if (val !== key) return val;
+      }
+      return i18nT(prop);
+    }
+  });
 
   // Search input values
   const [fromQuery, setFromQuery] = useState(fromLocation ? fromLocation.label : '');

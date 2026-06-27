@@ -44,6 +44,26 @@ module.exports = (sequelize) => {
     confidence_score: {
       type: DataTypes.FLOAT,
       defaultValue: 1.0
+    },
+    title_hi: {
+      type: DataTypes.STRING
+    },
+    description_hi: {
+      type: DataTypes.TEXT
+    },
+    sub_locality: {
+      type: DataTypes.STRING
+    },
+    location_confidence: {
+      type: DataTypes.FLOAT,
+      defaultValue: 0.8
+    },
+    is_kalman_filtered: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
+    kalman_state: {
+      type: DataTypes.JSONB
     }
   }, {
     tableName: 'incidents',
