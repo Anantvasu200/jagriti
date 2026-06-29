@@ -170,6 +170,14 @@ stage('Deploy') {
                 --exclude 'dist' \
                 --exclude '__pycache__' \
                 --exclude '.venv' \
+                --exclude 'venv' \
+                --exclude '.env' \
+                --exclude '*.bak' \
+                --exclude 'osrm-data' \
+                --exclude 'nlp-service/data' \
+                --exclude 'nlp-service/ncrb_data' \
+                --exclude '*@tmp' \
+                --exclude '.pytest_cache' \
                 "${WORKSPACE}/" "${PROJECT_DIR}/"
 
             cd ${PROJECT_DIR}
