@@ -161,22 +161,27 @@ stage('Deploy') {
     steps {
         sh '''
             set -e
+
+            # ── Sync freshly checked-out code to the deploy directory ──
+            echo "Syncing workspace → ${PROJECT_DIR} ..."
+            rsync -a --delete \
+                --exclude '.git' \
+                --exclude 'node_modules' \
+                --exclude 'dist' \
+                --exclude '__pycache__' \
+                --exclude '.venv' \
+                "${WORKSPACE}/" "${PROJECT_DIR}/"
+
             cd ${PROJECT_DIR}
-            
-            # Ensure .git is writable by Jenkins
-            chmod -R g+w .git 2>/dev/null || true
-            
-            # Skip git ops — code already in workspace from Checkout
-            echo "Using code from Checkout stage..."
-            
-            # Rebuild and restart (WITH CACHE)
+
+            # Rebuild and restart
             docker compose -f ${COMPOSE_FILE} down || true
-            docker compose -f ${COMPOSE_FILE} build
+            docker compose -f ${COMPOSE_FILE} build --no-cache
             docker compose -f ${COMPOSE_FILE} up -d
-            
-            # Cleanup
+
+            # Cleanup old images
             docker image prune -af --filter "until=72h"
-            
+
             echo "✅ Deployment complete — UI live at app.jagriti.online"
         '''
     }
