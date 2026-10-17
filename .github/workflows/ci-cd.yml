@@ -55,48 +55,29 @@ jobs:
           pip install -r requirements.txt
           python -m py_compile main.py nlp_pipeline.py gazetteer_builder.py database.py
 
-  # ── 2. Deploy to Home Server (Low Overhead) ──────────────────────────────────
+  # ── 2. Deploy to Home Server (Runs via Self-Hosted Runner) ───────────────────
   deploy:
     name: Deploy to Server
     needs: build-and-test
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Setup Tailscale (if TAILSCALE_AUTHKEY configured)
-        if: env.HAS_TAILSCALE == 'true'
-        uses: tailscale/github-action@v2
-        with:
-          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
-        env:
-          HAS_TAILSCALE: ${{ secrets.TAILSCALE_AUTHKEY != '' }}
-
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST || '100.74.21.113' }}
-          username: ${{ secrets.SERVER_USER || 'av' }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT || 22 }}
-          script_stop: true
-          script: |
-            echo "🚀 Starting automated deployment on Jagriti server..."
-            cd /opt/jagriti
-            
-            # Fetch latest committed changes
-            git fetch origin main
-            git reset --hard origin/main
-            
-            # Restart only the necessary microservices with zero downtime
-            echo "🐳 Starting Docker containers..."
-            docker compose up -d --build
-            
-            # Clean up old unused images to keep disk free
-            echo "🧹 Pruning unused Docker images..."
-            docker image prune -af --filter "until=72h"
-            
-            echo "✅ Jagriti deployment successful!"
-            docker compose ps
+      - name: Deploy Jagriti Services
+        run: |
+          echo "🚀 Deploying latest Jagriti on home server..."
+          cd /opt/jagriti
+          
+          # Fetch latest committed changes
+          git fetch origin main
+          git reset --hard origin/main
+          
+          # Restart only the necessary microservices with zero downtime
+          echo "🐳 Starting Docker containers..."
+          docker compose up -d --build
+          
+          # Clean up old unused images to keep disk free
+          echo "🧹 Pruning unused Docker images..."
+          docker image prune -af --filter "until=72h"
+          
+          echo "✅ Jagriti deployment successful!"
+          docker compose ps
