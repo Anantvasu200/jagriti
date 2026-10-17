@@ -20,10 +20,15 @@ from kalman_filter import denoise_incident_locations
 import sys
 import io
 
-def determine_city_from_text(text):
+def determine_city_from_text(text, feed_source=""):
     text_lower = text.lower()
     for city in MAJOR_CITIES:
         if re.search(r'\b' + re.escape(city.lower()) + r'\b', text_lower):
+            return city
+    # If not found in text, check feed source name
+    feed_lower = feed_source.lower()
+    for city in MAJOR_CITIES:
+        if city.lower() in feed_lower:
             return city
     return "Delhi"
 
@@ -225,30 +230,64 @@ def calculate_location_confidence(place_rank, importance, is_ner_extracted):
     
     return min(base + importance_bonus + ner_bonus, 1.0)
 
-def geocode_location(location_name, is_ner_extracted=True):
+def fetch_article_lead(link):
+    if not link or not link.startswith("http"):
+        return ""
+    try:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+        res = requests.get(link, headers=headers, timeout=3.5)
+        if res.status_code == 200:
+            soup = BeautifulSoup(res.text, "html.parser")
+            paras = [p.get_text().strip() for p in soup.find_all('p') if len(p.get_text().strip()) > 35]
+            return " ".join(paras[:3])[:800]
+    except Exception:
+        pass
+    return ""
+
+def geocode_location(location_name, fallback_query=None, is_ner_extracted=True):
     if not location_name:
         return None, None, None, 0.0
-    if location_name in GEOCODE_CACHE:
-        return GEOCODE_CACHE[location_name]
-    try:
-        url = f"https://nominatim.openstreetmap.org/search?q={requests.utils.quote(location_name)}, India&format=json&limit=1&addressdetails=1"
-        headers = {'User-Agent': 'Jagriti_NLP_Service_App'}
-        response = requests.get(url, headers=headers, timeout=10)
-        if response.status_code == 200:
-            data = response.json()
-            if data:
-                lat, lng = float(data[0]['lat']), float(data[0]['lon'])
-                place_rank = data[0].get('place_rank', 15)
-                importance = data[0].get('importance', 0.3)
-                formatted_address = format_nominatim_address(data[0])
-                loc_confidence = calculate_location_confidence(place_rank, importance, is_ner_extracted)
-                
-                res = (lat, lng, formatted_address, loc_confidence)
-                GEOCODE_CACHE[location_name] = res
-                return res
-    except Exception as e:
-        print(f"Geocoding error for {location_name}: {e}")
-    GEOCODE_CACHE[location_name] = (None, None, None, 0.0)
+
+    def query_nominatim(q):
+        clean_q = q.strip()
+        if not clean_q.lower().endswith("india"):
+            clean_q = f"{clean_q}, India"
+        if clean_q in GEOCODE_CACHE:
+            return GEOCODE_CACHE[clean_q]
+        try:
+            url = f"https://nominatim.openstreetmap.org/search?q={requests.utils.quote(clean_q)}&format=json&limit=1&addressdetails=1"
+            headers = {'User-Agent': 'Jagriti_NLP_Service_App/2.0'}
+            response = requests.get(url, headers=headers, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                if data:
+                    lat, lng = float(data[0]['lat']), float(data[0]['lon'])
+                    place_rank = data[0].get('place_rank', 15)
+                    importance = data[0].get('importance', 0.3)
+                    formatted_address = format_nominatim_address(data[0])
+                    loc_confidence = calculate_location_confidence(place_rank, importance, is_ner_extracted)
+                    res = (lat, lng, formatted_address, loc_confidence)
+                    GEOCODE_CACHE[clean_q] = res
+                    return res
+        except Exception as e:
+            print(f"Geocoding error for '{clean_q}': {e}")
+        GEOCODE_CACHE[clean_q] = (None, None, None, 0.0)
+        return None, None, None, 0.0
+
+    # Try primary query
+    lat, lng, addr, conf = query_nominatim(location_name)
+    if lat and lng:
+        return lat, lng, addr, conf
+
+    # If primary failed, try fallback query
+    if fallback_query and fallback_query.strip() != location_name.strip():
+        print(f"   Primary geocoding for '{location_name}' empty, trying fallback: '{fallback_query}'")
+        lat, lng, addr, conf = query_nominatim(fallback_query)
+        if lat and lng:
+            return lat, lng, addr, max(conf - 0.05, 0.5)
+
     return None, None, None, 0.0
 
 def is_within_india(lat, lng):
@@ -279,17 +318,28 @@ def cleanup_old_data(conn):
         return
     try:
         cursor = conn.cursor()
-        print(f"[{datetime.datetime.now()}] Running database cleanup for records older than 180 days...")
-        cursor.execute("""DELETE FROM incident_sources WHERE "createdAt" < NOW() - INTERVAL '180 days'""")
+        print(f"[{datetime.datetime.now()}] Running database cleanup for news records older than 180 days...")
+        cursor.execute("""
+            DELETE FROM incident_sources 
+            WHERE "incidentId" IN (
+                SELECT id FROM incidents 
+                WHERE (source = 'nlp' OR source IS NULL) 
+                AND "createdAt" < NOW() - INTERVAL '180 days'
+            )
+        """)
         sources_deleted = cursor.rowcount
-        cursor.execute("""DELETE FROM incidents WHERE "createdAt" < NOW() - INTERVAL '180 days'""")
+        cursor.execute("""
+            DELETE FROM incidents 
+            WHERE (source = 'nlp' OR source IS NULL) 
+            AND "createdAt" < NOW() - INTERVAL '180 days'
+        """)
         incidents_deleted = cursor.rowcount
         conn.commit()
         cursor.close()
         if incidents_deleted > 0 or sources_deleted > 0:
-            print(f" Cleanup successful: Removed {incidents_deleted} old incidents and {sources_deleted} old sources.")
+            print(f" Cleanup successful: Removed {incidents_deleted} old news incidents (NCRB & Community retained).")
         else:
-            print(" Cleanup complete: No old records found.")
+            print(" Cleanup complete: No old news records found.")
     except Exception as e:
         conn.rollback()
         print(f"Database Cleanup Error: {e}")
@@ -469,79 +519,71 @@ def process_feeds():
             full_text = f"{title}. {description}"
             crime_type, extracted_location, confidence, is_ner_extracted = extract_crime_info(full_text)
 
-            if crime_type != "other" and extracted_location:
+            # If potential crime detected, fetch lead paragraph from article for rich locality/address details
+            if crime_type != "other" and entry.link:
+                article_lead = fetch_article_lead(entry.link)
+                if article_lead:
+                    if feed.get("language") == "hi":
+                        article_lead_en = translate_hindi_to_english(article_lead)
+                        full_text = f"{title}. {description}. {article_lead_en}"
+                    else:
+                        full_text = f"{title}. {description}. {article_lead}"
+
+                    # Re-extract with full rich context
+                    crime_type, ner_loc, confidence, is_ner_extracted = extract_crime_info(full_text)
+                    if ner_loc:
+                        extracted_location = ner_loc
+
+            if crime_type != "other":
                 # 1. Determine city
-                city = determine_city_from_text(full_text)
+                city = determine_city_from_text(full_text, feed.get("source", ""))
                 
-                # 2. Fuzzy match against sub-locality gazetteer
+                # 2. Extract detailed hierarchical location (gali, sector, landmark, sub-locality)
+                hierarchical_loc = SubLocalityGazetteer.extract_location_hierarchy(full_text, default_city=city)
+                
                 sub_locality = None
-                gazetteer_match = None
-                if conn and gazetteer:
+                geocoding_query = extracted_location or f"{city}, India"
+                fallback_query = f"{city}, India"
+                location_confidence_boost = 0.0
+
+                if hierarchical_loc and hierarchical_loc["is_specific"]:
+                    sub_locality = hierarchical_loc["sub_locality"]
+                    geocoding_query = hierarchical_loc["primary_query"]
+                    fallback_query = hierarchical_loc["fallback_query"]
+                    city = hierarchical_loc["city"] or city
+                    location_confidence_boost = 0.20
+                    print(f"   📍 High-Precision Address Found: '{geocoding_query}' (Sub-locality: {sub_locality})")
+                elif gazetteer and extracted_location:
                     try:
                         gazetteer_match = gazetteer.fuzzy_match_sublocality(extracted_location, city)
+                        if gazetteer_match:
+                            sub_locality = gazetteer_match['matched_name']
+                            city = gazetteer_match.get("city") or city
+                            geocoding_query = f"{sub_locality}, {city}, India"
+                            fallback_query = f"{city}, India"
+                            location_confidence_boost = 0.15
+                            print(f"   Gazetteer Match: '{extracted_location}' -> '{sub_locality}' in {city} (boost: +0.15)")
                     except Exception as e:
                         print(f"Gazetteer matching error: {e}")
                 
-                # If matched, update the query name for geocoding and boost confidence
-                geocoding_query = extracted_location
-                location_confidence_boost = 0.0
-                if gazetteer_match:
-                    sub_locality = gazetteer_match['matched_name']
-                    geocoding_query = f"{sub_locality}, {city}"
-                    location_confidence_boost = 0.15
-                    print(f"   Gazetteer Match: '{extracted_location}' -> '{sub_locality}' in {city} (boost: +0.15)")
-                
-                # 3. Geocode location
-                lat, lng, formatted_address, loc_confidence = geocode_location(geocoding_query, is_ner_extracted)
-                
+                # 3. Geocode location with fallback support
+                lat, lng, formatted_address, loc_confidence = geocode_location(geocoding_query, fallback_query, is_ner_extracted)
                 loc_confidence = min(loc_confidence + location_confidence_boost, 1.0)
 
                 if lat and lng:
                     if not is_within_india(lat, lng):
-                        print(f"⚠️ Skipped: Location '{extracted_location}' ({lat}, {lng}) is outside India.")
+                        print(f"⚠️ Skipped: Location '{geocoding_query}' ({lat}, {lng}) is outside India.")
                         continue
 
-                    print(f" Geocoded: {extracted_location} -> ({lat}, {lng}) [{formatted_address}]")
+                    print(f" Geocoded: {geocoding_query} -> ({lat}, {lng}) [{formatted_address}]")
 
-                    # Default filtered coordinates to raw
+                    # Keep true, accurate coordinates without Kalman distortion for discrete incidents
                     filtered_lat = lat
                     filtered_lng = lng
                     is_kalman_filtered = False
                     kalman_state = None
 
                     if conn:
-                        # 4. Fetch previous incidents for this location to apply Kalman Filter
-                        try:
-                            # Use sub_locality or geocoded address as key
-                            match_key = sub_locality if sub_locality else formatted_address
-                            
-                            cursor.execute("""
-                                SELECT ST_Y(location::geometry) as lat, ST_X(location::geometry) as lng, kalman_state 
-                                FROM incidents 
-                                WHERE sub_locality = %s OR city = %s 
-                                ORDER BY "createdAt" DESC 
-                                LIMIT 5
-                            """, (match_key, match_key))
-                            previous = []
-                            for row in cursor.fetchall():
-                                previous.append({
-                                    'lat': row[0],
-                                    'lng': row[1],
-                                    'kalman_state': row[2]
-                                })
-                            
-                            if previous:
-                                # Apply Kalman filter
-                                kf_res = denoise_incident_locations(match_key, lat, lng, previous)
-                                filtered_lat = kf_res['filtered_lat']
-                                filtered_lng = kf_res['filtered_lon']
-                                is_kalman_filtered = kf_res['is_filtered']
-                                kalman_state = kf_res['kalman_state']
-                                if is_kalman_filtered:
-                                    print(f"   Kalman filter applied: ({lat:.5f}, {lng:.5f}) -> ({filtered_lat:.5f}, {filtered_lng:.5f})")
-                        except Exception as e:
-                            print(f"Kalman filter error: {e}")
-
                         incident_id = str(uuid.uuid4())
                         current_time = datetime.datetime.now()
                         combined_confidence = confidence * loc_confidence
