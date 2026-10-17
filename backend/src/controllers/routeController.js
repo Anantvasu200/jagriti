@@ -163,21 +163,17 @@ const suggest = async (req, res) => {
     const mode = transportMode || 'car';
     const profile = mode === 'walk' ? 'foot' : 'driving';
     
-    // Attempt local docker first, then fallback to public OSRM API
+    // Use OSRM routing service (Public API or configured endpoint)
     let osrmData;
-    const OSRM_LOCAL_URL = process.env.OSRM_SERVICE_URL || 'http://osrm-backend:5000';
-    const OSRM_PUBLIC_URL = 'https://router.project-osrm.org';
+    const OSRM_ROUTER_URL = process.env.OSRM_SERVICE_URL || 'https://router.project-osrm.org';
     
     try {
-      const url = `${OSRM_LOCAL_URL}/route/v1/${profile}/${startLon},${startLat};${endLon},${endLat}?overview=full&geometries=geojson&alternatives=true&steps=true`;
-      const response = await axios.get(url, { timeout: 4000 });
+      const url = `${OSRM_ROUTER_URL}/route/v1/${profile}/${startLon},${startLat};${endLon},${endLat}?overview=full&geometries=geojson&alternatives=true&steps=true`;
+      const response = await axios.get(url, { timeout: 8000 });
       osrmData = response.data;
-      console.log('Route suggestion retrieved from local OSRM container.');
-    } catch (localErr) {
-      console.warn('Local OSRM down or timed out. Falling back to public OSRM API...', localErr.message);
-      const url = `${OSRM_PUBLIC_URL}/route/v1/${profile}/${startLon},${startLat};${endLon},${endLat}?overview=full&geometries=geojson&alternatives=true&steps=true`;
-      const response = await axios.get(url);
-      osrmData = response.data;
+    } catch (routeErr) {
+      console.error('OSRM route lookup error:', routeErr.message);
+      return res.status(502).json({ status: 'error', message: 'Routing service temporarily unavailable.' });
     }
 
     if (osrmData.code !== 'Ok' || !osrmData.routes || osrmData.routes.length === 0) {

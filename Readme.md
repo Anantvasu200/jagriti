@@ -32,16 +32,13 @@ Crime data is automatically collected daily from:
 - **Community Reports** — Anonymous user-submitted incidents
 
 ### 🧠 NLP Processing Pipeline
-Every scraped article is processed through a Python FastAPI NLP service using spaCy. The pipeline extracts crime type, location, and date. Hindi articles are translated via LibreTranslate before processing. Locations are geocoded using Nominatim + OpenStreetMap and stored in PostgreSQL with PostGIS.
+Every scraped article is processed through a Python FastAPI NLP service using spaCy. The pipeline extracts crime type, location, and date. Hindi articles are translated via deep-translator before processing. Locations are geocoded using Nominatim + OpenStreetMap and stored in PostgreSQL with PostGIS.
 
 ### 📍 Community Reporting
 Any user can anonymously drop a pin on the map and report a safety incident. Reports earn a **verified badge** when 3+ independent users report the same area — creating a real-time crowd-sourced safety layer.
 
-### 🤖 AI Safety Assistant (RAG)
-Ask natural language questions like *"Is Lajpat Nagar safe at night?"* The RAG pipeline uses ChromaDB for vector storage and retrieves grounded answers from actual incident data — no hallucinations.
-
 ### 🆘 SOS & Safety Alerts
-Proximity alerts notify users when they enter high-incident zones. SOS and live location sharing planned for next release.
+Proximity alerts notify users when they enter high-incident zones. SOS and live location sharing with audible distress beacons are integrated in real time.
 
 ### 🔐 OTP-Verified Auth
 Email OTP authentication for verified community reporting.
@@ -52,18 +49,17 @@ Email OTP authentication for verified community reporting.
 
 ```
 Frontend          →  React + Vite + Tailwind CSS + Leaflet.js (PWA)
-Backend API       →  Node.js + Express + Sequelize ORM
+Backend API       →  Node.js + Express + Sequelize ORM + Socket.io
 NLP Service       →  Python FastAPI + spaCy (en_core_web_md) + APScheduler
 Database          →  PostgreSQL + PostGIS
-Vector Store      →  ChromaDB
-Translation       →  LibreTranslate (self-hosted)
+Translation       →  deep-translator (Google Translate Engine)
+Routing           →  OSRM (Open Source Routing Machine)
 Geocoding         →  Nominatim (OpenStreetMap)
 Scraping          →  Feedparser + BeautifulSoup
-Containerization  →  Docker + Docker Compose (9 containers)
+Containerization  →  Docker + Docker Compose (5 core containers)
 Reverse Proxy     →  Nginx
 Tunnel / SSL      →  Cloudflare Tunnel
 CI/CD             →  Jenkins (self-hosted)
-Monitoring        →  Prometheus + Grafana
 Deployment        →  Self-hosted Ubuntu Server
 ```
 
@@ -82,14 +78,13 @@ Nginx Reverse Proxy (port 8081)
       ↓
 React Frontend (Leaflet Map + PWA)
       ↓
-Node.js Backend API
+Node.js Backend API (Express + Socket.io)
     ↓              ↓
 PostgreSQL      Python FastAPI
 + PostGIS       NLP Service
                     ↓
                spaCy + Nominatim
-               ChromaDB (RAG)
-               LibreTranslate
+               deep-translator
 ```
 
 ---

@@ -12,6 +12,7 @@ services:
       - backend
     networks:
       - jagriti_net
+
   backend:
     build: ./backend
     container_name: jagriti_backend
@@ -33,9 +34,9 @@ services:
       - "5000:5000"
     depends_on:
       - postgres
-      - chromadb
     networks:
       - jagriti_net
+
   nlp-service:
     build: ./nlp-service
     container_name: jagriti_nlp
@@ -46,18 +47,15 @@ services:
       - DB_NAME=jagriti
       - DB_USER=jagriti
       - DB_PASSWORD=${DB_PASSWORD}
-      - CHROMADB_URL=http://chromadb:8001
       - EMAIL_USER=${EMAIL_USER}
       - EMAIL_PASS=${EMAIL_PASS}
-      - LIBRETRANSLATE_URL=http://libretranslate:5500
     ports:
       - "8000:8000"
     depends_on:
       - postgres
-      - chromadb
-      - libretranslate
     networks:
       - jagriti_net
+
   postgres:
     image: postgis/postgis:15-3.3
     container_name: jagriti_postgres
@@ -73,28 +71,7 @@ services:
       - "5432:5432"
     networks:
       - jagriti_net
-  chromadb:
-    image: chromadb/chroma:latest
-    container_name: jagriti_chromadb
-    restart: unless-stopped
-    volumes:
-      - chroma_data:/chroma/chroma
-    ports:
-      - "8001:8000"
-    networks:
-      - jagriti_net
-  libretranslate:
-    image: libretranslate/libretranslate:latest
-    container_name: jagriti_translate
-    restart: unless-stopped
-    environment:
-      - LT_LOAD_ONLY=en,hi
-    ports:
-      - "5500:5000"
-    volumes:
-      - libretranslate_data:/home/libretranslate/.local
-    networks:
-      - jagriti_net
+
   nginx:
     image: nginx:alpine
     container_name: jagriti_nginx
@@ -109,55 +86,10 @@ services:
       - backend
     networks:
       - jagriti_net
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: jagriti_prometheus
-    restart: unless-stopped
-    volumes:
-      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data:/prometheus
-    ports:
-      - "9090:9090"
-    networks:
-      - jagriti_net
-  grafana:
-    image: grafana/grafana:latest
-    container_name: jagriti_grafana
-    restart: unless-stopped
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASS}
-    volumes:
-      - grafana_data:/var/lib/grafana
-    ports:
-      - "3001:3000"
-    networks:
-      - jagriti_net
-  osrm-backend:
-    image: osrm/osrm-backend:v5.27
-    container_name: jagriti_osrm
-    volumes:
-      - ./osrm-data:/data
-    ports:
-      - "5001:5000"
-    command: |
-      sh -c "
-      if [ ! -f /data/delhi-latest.osrm ]; then
-        echo 'Downloading Delhi OSM data...'
-        wget -O /data/delhi-latest.osm.pbf https://download.geofabrik.de/asia/india/delhi-latest.osm.pbf
-        osrm-extract -p /opt/car.lua /data/delhi-latest.osm.pbf
-        osrm-contract /data/delhi-latest.osrm
-      fi
-      osrm-routed --algorithm ch /data/delhi-latest.osrm
-      "
-    networks:
-      - jagriti_net
-    restart: unless-stopped
+
 volumes:
   postgres_data:
-  chroma_data:
-  libretranslate_data:
-  prometheus_data:
-  grafana_data:
+
 networks:
   jagriti_net:
     driver: bridge
