@@ -1,0 +1,102 @@
+name: Jagriti CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  # ── 1. Security, Lint & Build Validation (Runs on GitHub Cloud Runners) ─────────
+  build-and-test:
+    name: Build & Test (Cloud Runner)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # ── Frontend Checks ──
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: |
+            frontend/package-lock.json
+            backend/package-lock.json
+
+      - name: Install & Build Frontend
+        run: |
+          echo "📦 Testing Frontend build..."
+          cd frontend
+          npm ci
+          npm run build
+
+      # ── Backend Checks ──
+      - name: Install Backend Dependencies
+        run: |
+          echo "📦 Testing Backend dependencies..."
+          cd backend
+          npm ci
+
+      # ── Python NLP Service Checks ──
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: nlp-service/requirements.txt
+
+      - name: Install NLP Service Dependencies
+        run: |
+          echo "📦 Testing NLP Service requirements..."
+          cd nlp-service
+          pip install -r requirements.txt
+          python -m py_compile nlp_pipeline.py gazetteer_builder.py api.py
+
+  # ── 2. Deploy to Home Server (Low Overhead) ──────────────────────────────────
+  deploy:
+    name: Deploy to Server
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Tailscale (if TAILSCALE_AUTHKEY configured)
+        if: env.HAS_TAILSCALE == 'true'
+        uses: tailscale/github-action@v2
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+        env:
+          HAS_TAILSCALE: ${{ secrets.TAILSCALE_AUTHKEY != '' }}
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST || '100.74.21.113' }}
+          username: ${{ secrets.SERVER_USER || 'av' }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script_stop: true
+          script: |
+            echo "🚀 Starting automated deployment on Jagriti server..."
+            cd /opt/jagriti
+            
+            # Fetch latest committed changes
+            git fetch origin main
+            git reset --hard origin/main
+            
+            # Restart only the necessary microservices with zero downtime
+            echo "🐳 Starting Docker containers..."
+            docker compose up -d --build
+            
+            # Clean up old unused images to keep disk free
+            echo "🧹 Pruning unused Docker images..."
+            docker image prune -af --filter "until=72h"
+            
+            echo "✅ Jagriti deployment successful!"
+            docker compose ps
