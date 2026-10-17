@@ -53,7 +53,7 @@ jobs:
           echo "📦 Testing NLP Service requirements..."
           cd nlp-service
           pip install -r requirements.txt
-          python -m py_compile nlp_pipeline.py gazetteer_builder.py api.py
+          python -m py_compile main.py nlp_pipeline.py gazetteer_builder.py database.py
 
   # ── 2. Deploy to Home Server (Low Overhead) ──────────────────────────────────
   deploy:
